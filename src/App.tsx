@@ -26,6 +26,7 @@ import {
   User
 } from 'lucide-react';
 import { CURRICULUM_UNITS, ALL_UNITS_SUMMARY, CHARACTERS, UnitData } from './data/curriculum';
+import { HeaderNav } from './components/HeaderNav';
 import { VocabSection } from './components/VocabSection';
 import { GrammarSection } from './components/GrammarSection';
 import { PhonicsSection } from './components/PhonicsSection';
@@ -189,1181 +190,29 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
-      {/* ================= ZONE 1: TOP BAR CONTRACT ================= */}
-      {/* [Brand title, one line] — [4–6 nav links] — [1–2 primary actions] */}
-      <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-md border-b border-slate-200/80 shadow-xs">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-          {/* Zone 1: Single Brand Identity */}
-          <div className="flex items-center gap-3 shrink-0">
-            <button
-              onClick={() => handleSelectUnit('unit-1')}
-              className="flex items-center gap-2.5 text-left focus:outline-none group"
-              title="Quay về bài học Unit 1"
-            >
-              <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-sky-500 via-indigo-600 to-indigo-700 text-white flex items-center justify-center font-black text-lg shadow-sm ring-2 ring-indigo-100 group-hover:scale-105 transition-transform">
-                4
-              </div>
-              <div>
-                <div className="flex items-center gap-1.5">
-                  <span className="text-base sm:text-lg font-black tracking-tight text-slate-900 leading-tight">
-                    Tiếng Anh 4
-                  </span>
-                  <span className="text-[11px] font-bold text-sky-700 bg-sky-50 px-2 py-0.5 rounded-md border border-sky-200/60">
-                    Global Success
-                  </span>
-                </div>
-                <span className="text-[11px] text-slate-500 font-medium block">
-                  Kết Nối Tri Thức Với Cuộc Sống
-                </span>
-              </div>
-            </button>
-          </div>
-
-          {/* Zone 2: Refined Segmented Navigation Tabs (Desktop XL) */}
-          <nav className="hidden xl:flex items-center gap-1 bg-slate-100/90 p-1.5 rounded-2xl border border-slate-200/60">
-            {selectedUnitId === 'unit-1' && (
-              <>
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    setActiveTab('lesson1');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    activeTab === 'lesson1'
-                      ? 'bg-white text-sky-700 shadow-sm font-black'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                  }`}
-                >
-                  <span>🌟</span>
-                  <span>Tiết 1 (Trang 10 - 11)</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    setActiveTab('lesson2');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    activeTab === 'lesson2'
-                      ? 'bg-white text-emerald-700 shadow-sm font-black'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                  }`}
-                >
-                  <span>🚀</span>
-                  <span>Tiết 2 (Trang 12 - 13)</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    setActiveTab('lesson3');
-                  }}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                    activeTab === 'lesson3'
-                      ? 'bg-white text-teal-700 shadow-sm font-black'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                  }`}
-                >
-                  <span>🎯</span>
-                  <span>Tiết 3 (Trang 14 - 15)</span>
-                </button>
-              </>
-            )}
-
-            {selectedUnitId === 'unit-2' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit2');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit2'
-                    ? 'bg-white text-rose-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>⏰</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 16 - 21)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-3' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit3');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit3'
-                    ? 'bg-white text-amber-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>📅</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 22 - 27)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-4' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit4');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit4'
-                    ? 'bg-white text-rose-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🎂</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 28 - 33)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-5' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit5');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit5'
-                    ? 'bg-white text-teal-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🚴</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 34 - 39)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'review-1' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('review1');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'review1'
-                    ? 'bg-white text-amber-800 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏆</span>
-                <span>Review 1 & Mở Rộng (Trang 40 - 43)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-6' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit6');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit6'
-                    ? 'bg-white text-blue-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏫</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 44 - 49)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-7' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit7');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit7'
-                    ? 'bg-white text-purple-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🗓️</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 50 - 55)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-8' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit8');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit8'
-                    ? 'bg-white text-rose-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🎨</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 56 - 61)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-9' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit9');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit9'
-                    ? 'bg-white text-orange-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏆</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 62 - 67)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-10' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit10');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit10'
-                    ? 'bg-white text-teal-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏖️</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 68 - 73)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-11' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit11');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit11'
-                    ? 'bg-white text-emerald-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏡</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 6 - 11)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-12' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit12');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit12'
-                    ? 'bg-white text-sky-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>👨‍💼</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 12 - 17)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-13' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit13');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit13'
-                    ? 'bg-white text-purple-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>👤</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 18 - 23)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-14' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit14');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit14'
-                    ? 'bg-white text-amber-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🧹</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 24 - 29)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-15' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit15');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit15'
-                    ? 'bg-white text-teal-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🎾</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 30 - 35)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-16' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit16');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit16'
-                    ? 'bg-white text-sky-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>⛅</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 40 - 45)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-17' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit17');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit17'
-                    ? 'bg-white text-blue-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🚦</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 46 - 51)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-18' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit18');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit18'
-                    ? 'bg-white text-pink-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🛍️</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 52 - 57)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-19' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit19');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit19'
-                    ? 'bg-white text-amber-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🦁</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 58 - 63)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'unit-20' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('unit20');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'unit20'
-                    ? 'bg-white text-orange-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>⛺</span>
-                <span>Bài Học SGK (Tiết 1, 2, 3 · Trang 64 - 69)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'review-4' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('review4');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'review4'
-                    ? 'bg-white text-rose-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏆</span>
-                <span>Bài Học SGK (Review 4 · Trang 70 - 71)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'review-3' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('review3');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'review3'
-                    ? 'bg-white text-indigo-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏆</span>
-                <span>Bài Học SGK (Review 3 · Trang 36 - 39)</span>
-              </button>
-            )}
-
-            {selectedUnitId === 'review-2' && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('review2');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'review2'
-                    ? 'bg-white text-amber-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>🏆</span>
-                <span>Review 2 &amp; Extension (Trang 74 - 77)</span>
-              </button>
-            )}
-
-            {(selectedUnitId === 'wordlist-1' || selectedUnitId === 'wordlist-2') && (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('wordlist');
-                }}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                  activeTab === 'wordlist'
-                    ? 'bg-white text-blue-700 shadow-sm font-black'
-                    : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-                }`}
-              >
-                <span>📑</span>
-                <span>{selectedUnitId === 'wordlist-2' ? 'Wordlist Tập 2 (Trang 74 - 75)' : 'Wordlist Tập 1 (Trang 78 - 80)'}</span>
-              </button>
-            )}
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('exam');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'exam'
-                  ? 'bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 text-white shadow-sm font-black ring-2 ring-indigo-300'
-                  : 'bg-rose-50 text-rose-700 hover:text-rose-900 hover:bg-rose-100 font-bold border border-rose-200'
-              }`}
-            >
-              <span>📝</span>
-              <span>Đề Thi Học Kì</span>
-              <span
-                className={`text-[10px] font-black px-1.5 py-0.2 rounded-full uppercase ${
-                  activeTab === 'exam' ? 'bg-white text-indigo-700' : 'bg-rose-600 text-white'
-                }`}
-              >
-                13 Đề
-              </span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('wordlist');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'wordlist'
-                  ? 'bg-white text-blue-700 shadow-sm font-black ring-1 ring-blue-300'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <span>📑</span>
-              <span>Wordlist SGK</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('vocab');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'vocab'
-                  ? 'bg-white text-indigo-700 shadow-sm font-black ring-1 ring-indigo-200'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <span>🃏</span>
-              <span>Từ Vựng · Flashcard · Nghe Viết</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('grammar');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'grammar'
-                  ? 'bg-white text-indigo-700 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <span>💬</span>
-              <span>Ngữ Pháp</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('phonics');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'phonics'
-                  ? 'bg-white text-purple-700 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <span>🗣️</span>
-              <span>Phonics</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('games');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'games'
-                  ? 'bg-white text-amber-700 shadow-sm font-black'
-                  : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
-              }`}
-            >
-              <span>🎲</span>
-              <span>Luyện Tập</span>
-            </button>
-
-            <button
-              onClick={() => {
-                sound.playClick();
-                setActiveTab('parent');
-              }}
-              className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all whitespace-nowrap flex items-center gap-1.5 ${
-                activeTab === 'parent'
-                  ? 'bg-rose-50 text-rose-700 shadow-sm font-black border border-rose-200'
-                  : 'text-rose-600 hover:text-rose-800 hover:bg-rose-50/50'
-              }`}
-            >
-              <span>❤️</span>
-              <span>Phụ Huynh</span>
-            </button>
-          </nav>
-
-          {/* Zone 3: Control Dock (Audio, Stars, Unit Picker) */}
-          <div className="flex items-center gap-2.5">
-            {/* Audio Voice & Speed Control Pill */}
-            <div className="flex items-center bg-slate-100 rounded-2xl p-1 border border-slate-200 shadow-2xs">
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setShowVoiceStudio(true);
-                }}
-                title="Giọng Google US English (Anh - Anh) chất lượng cao. Bấm để tinh chỉnh độ vang và tốc độ."
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-700 hover:bg-white transition-all"
-              >
-                <span>🎙️</span>
-                <span className="hidden sm:inline">Google US English (Anh - Anh)</span>
-                <Volume2 className="w-3.5 h-3.5 text-rose-600" />
-              </button>
-
-              <div className="w-px h-4 bg-slate-200 mx-0.5" />
-
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setSpeechRate(prev => (prev === 0.88 ? 0.72 : 0.88));
-                }}
-                title="Chỉnh tốc độ giọng đọc"
-                className="px-2 py-1 rounded-xl text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-white transition-all font-mono"
-              >
-                {speechRate < 0.8 ? '0.7x' : '0.9x'}
-              </button>
-            </div>
-
-            {/* Stars count */}
-            <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50/90 border border-amber-200/80 rounded-2xl text-amber-900 font-black text-xs tabular-nums shadow-xs">
-              <span className="text-amber-500">⭐</span>
-              <span>{totalStars}</span>
-            </div>
-
-            {/* Admin Approval Dashboard Button */}
-            {currentUser?.role === 'admin' ? (
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setShowAdminModal(true);
-                }}
-                className="relative flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-purple-700 to-indigo-700 text-white font-black text-xs shadow-xs hover:brightness-105 transition active:scale-95 whitespace-nowrap"
-                title="Phê duyệt học sinh vào học"
-              >
-                <Shield className="w-3.5 h-3.5 text-amber-300" />
-                <span className="hidden md:inline">Duyệt Học Sinh</span>
-                {pendingApprovalsCount > 0 && (
-                  <span className="px-1.5 py-0.2 bg-amber-400 text-amber-950 rounded-full text-[10px] font-black animate-pulse">
-                    {pendingApprovalsCount}
-                  </span>
-                )}
-              </button>
-            ) : null}
-
-            {/* User Account / Profile / Register Button */}
-            {currentUser ? (
-              <div className="flex items-center gap-1 bg-slate-100 rounded-2xl p-1 border border-slate-200">
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    if (currentUser.role === 'admin') {
-                      setShowAdminModal(true);
-                    } else {
-                      setShowAuthModal(true);
-                    }
-                  }}
-                  className="flex items-center gap-1.5 px-2 py-0.5 rounded-xl text-xs font-bold text-slate-800 hover:bg-white transition"
-                  title={`Tài khoản: ${currentUser.fullName} (${currentUser.role === 'admin' ? 'Quản Trị Viên' : currentUser.status === 'approved' ? 'Đã duyệt' : 'Chờ duyệt'})`}
-                >
-                  <span className="text-sm">{currentUser.avatarEmoji || (currentUser.role === 'admin' ? '👨‍🏫' : '👦')}</span>
-                  <span className="max-w-[70px] sm:max-w-[110px] truncate font-black hidden sm:inline">
-                    {currentUser.fullName}
-                  </span>
-                  {currentUser.status === 'pending' ? (
-                    <span className="text-[10px] bg-amber-400 text-amber-950 font-black px-1.5 py-0.2 rounded-full animate-pulse">
-                      Chờ duyệt ⏳
-                    </span>
-                  ) : currentUser.role === 'admin' ? (
-                    <span className="text-[10px] bg-purple-100 text-purple-800 font-black px-1.5 py-0.2 rounded-full">
-                      Admin
-                    </span>
-                  ) : (
-                    <span className="text-[10px] bg-emerald-100 text-emerald-800 font-black px-1.5 py-0.2 rounded-full">
-                      {currentUser.schoolClass || 'Đã duyệt'} ✓
-                    </span>
-                  )}
-                </button>
-
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    authService.logout();
-                    setCurrentUser(null);
-                  }}
-                  className="p-1 rounded-xl text-slate-400 hover:text-rose-600 hover:bg-white transition"
-                  title="Đăng xuất"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            ) : (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    setAuthModalTab('register');
-                    setShowAuthModal(true);
-                  }}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:brightness-105 text-white font-black text-xs shadow-xs transition active:scale-95 whitespace-nowrap"
-                >
-                  <UserPlus className="w-3.5 h-3.5" />
-                  <span>Đăng Ký Vào Học</span>
-                </button>
-
-                <button
-                  onClick={() => {
-                    sound.playClick();
-                    setAuthModalTab('login');
-                    setShowAuthModal(true);
-                  }}
-                  className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition"
-                >
-                  <LogIn className="w-3 h-3" />
-                  <span>Đăng nhập</span>
-                </button>
-              </div>
-            )}
-
-            {/* Unit Picker button */}
-            <div className="relative">
-              <button
-                onClick={() => setShowUnitMenu(!showUnitMenu)}
-                className="flex items-center gap-2 px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-2xl text-xs font-black transition-all shadow-sm active:scale-95 whitespace-nowrap"
-              >
-                <span className="text-sm">{currentIcon}</span>
-                <span>{selectedUnitId === 'review-1' ? 'Review 1' : `Unit ${currentUnit.unitNumber}`}</span>
-                <ChevronDown
-                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
-                    showUnitMenu ? 'rotate-180 text-white' : ''
-                  }`}
-                />
-              </button>
-
-              {/* Unit Dropdown / Navigation Sheet */}
-              {showUnitMenu && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-slate-200 p-4 z-50 animate-in fade-in">
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-                    <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-                      Chọn bài học trong SGK
-                    </span>
-                    {/* Volume filter tabs */}
-                    <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-lg">
-                      <button
-                        onClick={() => setVolumeFilter(1)}
-                        className={`px-2 py-0.5 text-xs font-bold rounded ${
-                          volumeFilter === 1 ? 'bg-white shadow text-slate-900' : 'text-slate-500'
-                        }`}
-                      >
-                        Tập 1
-                      </button>
-                      <button
-                        onClick={() => setVolumeFilter(2)}
-                        className={`px-2 py-0.5 text-xs font-bold rounded ${
-                          volumeFilter === 2 ? 'bg-white shadow text-slate-900' : 'text-slate-500'
-                        }`}
-                      >
-                        Tập 2
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className="mt-3 max-h-80 overflow-y-auto space-y-1.5 pr-1">
-                    {ALL_UNITS_SUMMARY.filter(u => u.volume === volumeFilter).map(unit => {
-                      const isSelected = selectedUnitId === unit.id;
-                      const hasDetailedContent = CURRICULUM_UNITS.some(cu => cu.id === unit.id);
-
-                      return (
-                        <button
-                          key={unit.id}
-                          onClick={() => handleSelectUnit(unit.id)}
-                          className={`w-full p-2.5 rounded-xl text-left transition-colors flex items-center justify-between ${
-                            isSelected
-                              ? 'bg-sky-50 text-sky-900 font-bold border border-sky-200'
-                              : 'hover:bg-slate-50 text-slate-700'
-                          }`}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <span className="text-lg">{unit.icon}</span>
-                            <div>
-                              <div className="text-xs font-bold">
-                                {unit.id.startsWith('review') || unit.id.startsWith('wordlist') || unit.id === 'exam-hub'
-                                  ? unit.title
-                                  : `Unit ${unit.unitNumber}: ${unit.title}`}
-                              </div>
-                              <div className="text-[11px] text-slate-500 font-normal">
-                                {unit.vietnameseTitle} · {unit.pageTextbook}
-                              </div>
-                            </div>
-                          </div>
-
-                          {(hasDetailedContent || unit.id === 'review-1') && (
-                            <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-1.5 py-0.5 rounded">
-                              {unit.id === 'review-1' ? 'Chuẩn SGK' : 'Đủ 5 phần'}
-                            </span>
-                          )}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Mobile View Tabs Strip */}
-        <div className="xl:hidden flex items-center gap-1.5 overflow-x-auto px-4 py-2 bg-slate-100/90 border-t border-slate-200 text-xs font-bold no-scrollbar">
-          {selectedUnitId === 'unit-1' && (
-            <>
-              <button
-                onClick={() => setActiveTab('lesson1')}
-                className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                  activeTab === 'lesson1' ? 'bg-white text-sky-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-                }`}
-              >
-                <span>🌟</span>
-                <span>Tiết 1</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('lesson2')}
-                className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                  activeTab === 'lesson2' ? 'bg-white text-emerald-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-                }`}
-              >
-                <span>🚀</span>
-                <span>Tiết 2</span>
-              </button>
-
-              <button
-                onClick={() => setActiveTab('lesson3')}
-                className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                  activeTab === 'lesson3' ? 'bg-white text-teal-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-                }`}
-              >
-                <span>🎯</span>
-                <span>Tiết 3</span>
-              </button>
-            </>
-          )}
-          {selectedUnitId === 'unit-2' && (
-            <button
-              onClick={() => setActiveTab('unit2')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit2' ? 'bg-white text-rose-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>⏰</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-3' && (
-            <button
-              onClick={() => setActiveTab('unit3')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit3' ? 'bg-white text-amber-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>📅</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-4' && (
-            <button
-              onClick={() => setActiveTab('unit4')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit4' ? 'bg-white text-rose-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🎂</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-5' && (
-            <button
-              onClick={() => setActiveTab('unit5')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit5' ? 'bg-white text-teal-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🚴</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'review-1' && (
-            <button
-              onClick={() => setActiveTab('review1')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'review1' ? 'bg-white text-amber-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏆</span>
-              <span>Review 1 SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-6' && (
-            <button
-              onClick={() => setActiveTab('unit6')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit6' ? 'bg-white text-blue-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏫</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-7' && (
-            <button
-              onClick={() => setActiveTab('unit7')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit7' ? 'bg-white text-purple-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🗓️</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-8' && (
-            <button
-              onClick={() => setActiveTab('unit8')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit8' ? 'bg-white text-rose-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🎨</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-9' && (
-            <button
-              onClick={() => setActiveTab('unit9')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit9' ? 'bg-white text-orange-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏆</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-10' && (
-            <button
-              onClick={() => setActiveTab('unit10')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit10' ? 'bg-white text-teal-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏖️</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-11' && (
-            <button
-              onClick={() => setActiveTab('unit11')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit11' ? 'bg-white text-emerald-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏡</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-12' && (
-            <button
-              onClick={() => setActiveTab('unit12')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit12' ? 'bg-white text-sky-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>👨‍💼</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-13' && (
-            <button
-              onClick={() => setActiveTab('unit13')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit13' ? 'bg-white text-purple-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>👤</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-14' && (
-            <button
-              onClick={() => setActiveTab('unit14')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit14' ? 'bg-white text-amber-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🧹</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-15' && (
-            <button
-              onClick={() => setActiveTab('unit15')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit15' ? 'bg-white text-teal-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🎾</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-16' && (
-            <button
-              onClick={() => setActiveTab('unit16')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit16' ? 'bg-white text-sky-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>⛅</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-17' && (
-            <button
-              onClick={() => setActiveTab('unit17')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit17' ? 'bg-white text-blue-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🚦</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-18' && (
-            <button
-              onClick={() => setActiveTab('unit18')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit18' ? 'bg-white text-pink-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🛍️</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-19' && (
-            <button
-              onClick={() => setActiveTab('unit19')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit19' ? 'bg-white text-amber-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🦁</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'unit-20' && (
-            <button
-              onClick={() => setActiveTab('unit20')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'unit20' ? 'bg-white text-orange-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>⛺</span>
-              <span>Bài Học SGK</span>
-            </button>
-          )}
-          {selectedUnitId === 'review-4' && (
-            <button
-              onClick={() => setActiveTab('review4')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'review4' ? 'bg-white text-rose-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏆</span>
-              <span>Review 4</span>
-            </button>
-          )}
-          {selectedUnitId === 'review-3' && (
-            <button
-              onClick={() => setActiveTab('review3')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'review3' ? 'bg-white text-indigo-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏆</span>
-              <span>Review 3</span>
-            </button>
-          )}
-          {selectedUnitId === 'review-2' && (
-            <button
-              onClick={() => setActiveTab('review2')}
-              className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-                activeTab === 'review2' ? 'bg-white text-amber-800 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-              }`}
-            >
-              <span>🏆</span>
-              <span>Review 2</span>
-            </button>
-          )}
-          <button
-            onClick={() => setActiveTab('exam')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'exam'
-                ? 'bg-gradient-to-r from-rose-600 via-indigo-600 to-purple-600 text-white shadow-xs font-black'
-                : 'text-rose-700 bg-rose-50 border border-rose-200'
-            }`}
-          >
-            <span>📝</span>
-            <span>Đề Thi (13 Đề)</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('wordlist')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'wordlist' ? 'bg-white text-blue-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-            }`}
-          >
-            <span>📑</span>
-            <span>Wordlist SGK</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('vocab')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'vocab' ? 'bg-white text-indigo-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-            }`}
-          >
-            <span>🃏</span>
-            <span>Flashcard &amp; Nghe Viết</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('grammar')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'grammar' ? 'bg-white text-indigo-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-            }`}
-          >
-            <span>💬</span>
-            <span>Ngữ Pháp</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('phonics')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'phonics' ? 'bg-white text-purple-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-            }`}
-          >
-            <span>🗣️</span>
-            <span>Phonics</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('games')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'games' ? 'bg-white text-amber-700 shadow-xs font-black border border-slate-200' : 'text-slate-600'
-            }`}
-          >
-            <span>🎲</span>
-            <span>Luyện Tập</span>
-          </button>
-          <button
-            onClick={() => setActiveTab('parent')}
-            className={`px-3 py-1.5 rounded-xl whitespace-nowrap transition-colors flex items-center gap-1 ${
-              activeTab === 'parent' ? 'bg-rose-50 text-rose-700 shadow-xs font-black border border-rose-200' : 'text-rose-600'
-            }`}
-          >
-            <span>❤️</span>
-            <span>Phụ Huynh</span>
-          </button>
-        </div>
-      </header>
+      <HeaderNav
+        selectedUnitId={selectedUnitId}
+        activeTab={activeTab}
+        currentUnit={currentUnit}
+        speechRate={speechRate}
+        totalStars={totalStars}
+        pendingApprovalsCount={pendingApprovalsCount}
+        currentUser={currentUser}
+        onSelectUnit={handleSelectUnit}
+        onSelectTab={setActiveTab}
+        onOpenVoiceStudio={() => setShowVoiceStudio(true)}
+        onChangeSpeechRate={setSpeechRate}
+        onOpenCharactersModal={() => setShowCharactersModal(true)}
+        onOpenAdminModal={() => setShowAdminModal(true)}
+        onOpenAuthModal={(tab) => {
+          setAuthModalTab(tab);
+          setShowAuthModal(true);
+        }}
+        onLogout={() => {
+          authService.logout();
+          setCurrentUser(null);
+        }}
+      />
 
       {/* ================= PENDING APPROVAL NOTIFICATION BANNER ================= */}
       {currentUser?.status === 'pending' && (
@@ -1398,70 +247,116 @@ export default function App() {
         </div>
       )}
 
-      {/* ================= HERO UNIT BANNER ================= */}
-      <section className="bg-gradient-to-b from-white via-white to-slate-50/70 border-b border-slate-200/80">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-7">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-            <div className="space-y-2.5">
-              {/* Clean typographic breadcrumb metadata without pills */}
-              <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
-                <span className="flex items-center gap-1.5 text-slate-700">
-                  <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>Sách Giáo Khoa Lớp 4 (Tập {currentUnit.volume})</span>
-                </span>
-                <span aria-hidden="true" className="text-slate-300">/</span>
-                <span>Chủ điểm: {currentUnit.theme}</span>
-                <span aria-hidden="true" className="text-slate-300">/</span>
-                <span className="text-indigo-700 font-bold">Unit {currentUnit.unitNumber}</span>
+      {/* ================= HERO UNIT BANNER (SHOWN DURING UNIT EXPLORATION) ================= */}
+      {!['exam', 'wordlist', 'parent'].includes(activeTab) && (
+        <section className="bg-gradient-to-b from-white via-white to-slate-50/70 border-b border-slate-200/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 sm:py-7">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+              <div className="space-y-2.5">
+                {/* Clean typographic breadcrumb metadata without pills */}
+                <div className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+                  <span className="flex items-center gap-1.5 text-slate-700">
+                    <BookOpen className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>Sách Giáo Khoa Lớp 4 (Tập {currentUnit.volume})</span>
+                  </span>
+                  <span aria-hidden="true" className="text-slate-300">/</span>
+                  <span>Chủ điểm: {currentUnit.theme}</span>
+                  <span aria-hidden="true" className="text-slate-300">/</span>
+                  <span className="text-indigo-700 font-bold">Unit {currentUnit.unitNumber}</span>
+                </div>
+
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl shrink-0 shadow-2xs">
+                    {currentIcon}
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-3">
+                      <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
+                        Unit {currentUnit.unitNumber}: {currentUnit.title}
+                      </h1>
+                      <button
+                        onClick={() => speakWord(currentUnit.title, speechRate)}
+                        className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
+                        title="Nghe phát âm tiêu đề bài học"
+                      >
+                        <Volume2 className="w-5 h-5" />
+                      </button>
+                    </div>
+                    <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
+                      {currentUnit.vietnameseTitle} — Giúp học sinh hiểu sâu bản chất, ghi nhớ nhanh qua hình ảnh và bố mẹ dễ dàng đồng hành.
+                    </p>
+                  </div>
+                </div>
               </div>
 
-              <div className="flex items-center gap-3.5">
-                <div className="w-12 h-12 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-2xl shrink-0 shadow-2xs">
-                  {currentIcon}
-                </div>
-                <div>
-                  <div className="flex items-center gap-3">
-                    <h1 className="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">
-                      Unit {currentUnit.unitNumber}: {currentUnit.title}
-                    </h1>
+              {/* Quick action bar */}
+              <div className="flex flex-wrap items-center gap-2">
+                {selectedUnitId === 'unit-1' && ['lesson1', 'lesson2', 'lesson3'].includes(activeTab) && (
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-2xl border border-slate-200">
                     <button
-                      onClick={() => speakWord(currentUnit.title, speechRate)}
-                      className="p-1.5 text-slate-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-xl transition-colors"
-                      title="Nghe phát âm tiêu đề bài học"
+                      onClick={() => {
+                        sound.playClick();
+                        setActiveTab('lesson1');
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        activeTab === 'lesson1'
+                          ? 'bg-white text-sky-700 shadow-xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
                     >
-                      <Volume2 className="w-5 h-5" />
+                      Tiết 1 (Trang 10 - 11)
+                    </button>
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        setActiveTab('lesson2');
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        activeTab === 'lesson2'
+                          ? 'bg-white text-emerald-700 shadow-xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Tiết 2 (Trang 12 - 13)
+                    </button>
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        setActiveTab('lesson3');
+                      }}
+                      className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all ${
+                        activeTab === 'lesson3'
+                          ? 'bg-white text-teal-700 shadow-xs font-black'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      Tiết 3 (Trang 14 - 15)
                     </button>
                   </div>
-                  <p className="text-xs sm:text-sm text-slate-600 font-medium mt-0.5">
-                    {currentUnit.vietnameseTitle} — Giúp học sinh hiểu sâu bản chất, ghi nhớ nhanh qua hình ảnh và bố mẹ dễ dàng đồng hành.
-                  </p>
-                </div>
+                )}
+
+                <button
+                  onClick={() => setShowCharactersModal(true)}
+                  className="px-3 py-2 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200/80 font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-1.5"
+                >
+                  <Users className="w-3.5 h-3.5 text-indigo-600" />
+                  <span>10 Nhân Vật SGK</span>
+                </button>
+
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    setActiveTab('parent');
+                  }}
+                  className="px-3 py-2 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200/80 font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-1"
+                >
+                  <span>👨‍👩‍👧 Góc Phụ Huynh</span>
+                </button>
               </div>
             </div>
-
-            {/* Quick action bar */}
-            <div className="flex flex-wrap items-center gap-2.5">
-              <button
-                onClick={() => setShowCharactersModal(true)}
-                className="px-3.5 py-2 bg-white hover:bg-slate-100 text-slate-800 border border-slate-200/80 font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-2"
-              >
-                <Users className="w-4 h-4 text-indigo-600" />
-                <span>10 Nhân Vật SGK</span>
-              </button>
-
-              <button
-                onClick={() => {
-                  sound.playClick();
-                  setActiveTab('parent');
-                }}
-                className="px-3.5 py-2 bg-rose-50 hover:bg-rose-100 text-rose-800 border border-rose-200/80 font-bold text-xs rounded-xl transition-colors shadow-2xs flex items-center gap-1.5"
-              >
-                <span>👨‍👩‍👧 Góc Phụ Huynh</span>
-              </button>
-            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* ================= MAIN CONTENT VIEWPORT ================= */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-8">
@@ -1539,7 +434,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'review1' || selectedUnitId === 'review-1') && (
+        {activeTab === 'review1' && selectedUnitId === 'review-1' && (
           <Review1Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1613,7 +508,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit11' || selectedUnitId === 'unit-11') && (
+        {activeTab === 'unit11' && selectedUnitId === 'unit-11' && (
           <Unit11Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1626,7 +521,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit12' || selectedUnitId === 'unit-12') && (
+        {activeTab === 'unit12' && selectedUnitId === 'unit-12' && (
           <Unit12Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1640,7 +535,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit13' || selectedUnitId === 'unit-13') && (
+        {activeTab === 'unit13' && selectedUnitId === 'unit-13' && (
           <Unit13Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1655,7 +550,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit14' || selectedUnitId === 'unit-14') && (
+        {activeTab === 'unit14' && selectedUnitId === 'unit-14' && (
           <Unit14Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1670,7 +565,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit15' || selectedUnitId === 'unit-15') && (
+        {activeTab === 'unit15' && selectedUnitId === 'unit-15' && (
           <Unit15Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1686,7 +581,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'review3' || selectedUnitId === 'review-3') && (
+        {activeTab === 'review3' && selectedUnitId === 'review-3' && (
           <Review3Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1703,7 +598,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit16' || selectedUnitId === 'unit-16') && (
+        {activeTab === 'unit16' && selectedUnitId === 'unit-16' && (
           <Unit16Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1720,7 +615,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit17' || selectedUnitId === 'unit-17') && (
+        {activeTab === 'unit17' && selectedUnitId === 'unit-17' && (
           <Unit17Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1734,7 +629,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit18' || selectedUnitId === 'unit-18') && (
+        {activeTab === 'unit18' && selectedUnitId === 'unit-18' && (
           <Unit18Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1747,7 +642,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit19' || selectedUnitId === 'unit-19') && (
+        {activeTab === 'unit19' && selectedUnitId === 'unit-19' && (
           <Unit19Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1760,7 +655,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'unit20' || selectedUnitId === 'unit-20') && (
+        {activeTab === 'unit20' && selectedUnitId === 'unit-20' && (
           <Unit20Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1773,7 +668,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'review4' || selectedUnitId === 'review-4') && (
+        {activeTab === 'review4' && selectedUnitId === 'review-4' && (
           <Review4Studio
             speechRate={speechRate}
             onAddStar={addStar}
@@ -1788,7 +683,7 @@ export default function App() {
           />
         )}
 
-        {(activeTab === 'review2' || selectedUnitId === 'review-2') && (
+        {activeTab === 'review2' && selectedUnitId === 'review-2' && (
           <Review2Studio
             speechRate={speechRate}
             onAddStar={addStar}
