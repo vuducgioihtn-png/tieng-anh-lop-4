@@ -1,0 +1,8 @@
+{
+  "name": "Global Success Tiếng Anh Lớp 4 - Học Vui & Đồng Hành Cùng Con",
+  "description": "Ứng dụng tương tác Tiếng Anh 4 (Global Success Tập 1 & Tập 2) giúp học sinh hiểu nhanh hiểu sâu, phát âm chuẩn cùng các game vui nhộn và cẩm nang chi tiết cho phụ huynh dạy con.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
