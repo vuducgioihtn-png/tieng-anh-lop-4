@@ -4620,7 +4620,7 @@ export const ALL_UNITS_SUMMARY: UnitSummary[] = [
   { id: 'unit-20', volume: 2, unitNumber: 20, title: 'At summer camp', vietnameseTitle: 'Ở trại hè', pageTextbook: 'Trang 64', keyStructure: 'What’s he doing? - He’s building a campfire / What are they doing?', icon: '⛺' },
   { id: 'review-4', volume: 2, unitNumber: 0, title: 'Review 4 & Extension', vietnameseTitle: 'Ôn tập 4 & Tổng kết Tập 2', pageTextbook: 'Trang 70 - 71', keyStructure: 'Review Units 16 - 20 (Weather, City, Shopping, Animals, Summer camp)', icon: '🏆' },
   { id: 'wordlist-2', volume: 2, unitNumber: 0, title: 'Wordlist SGK Tập 2', vietnameseTitle: 'Danh mục từ vựng Tập 2', pageTextbook: 'Trang 74 - 75', keyStructure: 'Bảng tra cứu 100+ từ vựng Tập 2 chuẩn phiên âm IPA', icon: '📑' },
-  { id: 'exam-hub', volume: 1, unitNumber: 0, title: 'Bộ Đề Thi Học Kì (4 Đề)', vietnameseTitle: 'Đề Thi Tuyển Chọn Lớp 4', pageTextbook: 'Đề 1 - 4 Có Audio', keyStructure: 'Trắc nghiệm, Nghe, Đọc, Phát âm, Sắp xếp câu & Tính giờ', icon: '📝' }
+  { id: 'exam-hub', volume: 1, unitNumber: 0, title: 'Kho Đề Thi Học Kì (14 Đề)', vietnameseTitle: 'Đề Thi Tuyển Chọn Lớp 4', pageTextbook: '14 Đề Chuẩn Có Audio', keyStructure: 'Trắc nghiệm, Nghe Audio, Đọc hiểu, Đặt câu hỏi, Sắp xếp câu & Tính giờ', icon: '📝' }
 ];
 
 export const CHARACTERS = [

@@ -33,7 +33,7 @@ import {
 } from 'lucide-react';
 import { WORDLIST_SEMESTER_1, WordlistItem } from '../data/wordlistSemester1';
 import { WORDLIST_SEMESTER_2, WordlistItemSemester2 } from '../data/wordlistSemester2';
-import { sound, speakWord } from '../utils/audio';
+import { sound, speakWord, getActiveVoicePersona } from '../utils/audio';
 
 // Unified item type for both semester 1 & 2
 export interface UnifiedWordlistItem {
@@ -619,10 +619,11 @@ export const WordlistStudio: React.FC<WordlistStudioProps> = ({
               {onOpenVoiceStudio && (
                 <button
                   onClick={onOpenVoiceStudio}
+                  title={`Cài đặt giọng đọc nữ tiếng Anh (Hiện tại: ${getActiveVoicePersona().name}). Bấm để chọn giọng khác.`}
                   className="px-3 py-1.5 rounded-xl bg-amber-400 hover:bg-amber-300 text-amber-950 font-black text-xs transition flex items-center gap-1 shadow-sm"
                 >
                   <Mic className="w-3.5 h-3.5" />
-                  <span>Voice Studio</span>
+                  <span>Giọng {getActiveVoicePersona().name.split(' ')[0]}</span>
                 </button>
               )}
             </div>

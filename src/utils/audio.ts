@@ -196,33 +196,148 @@ export interface VoicePersona {
   name: string;
   description: string;
   accent: string;
+  category: 'us' | 'uk' | 'au' | 'ai';
+  locale: string;
   tag: string;
+  badgeColor: string;
+  avatarBg: string;
+  avatar: string;
   recommendedPitch: number;
   recommendedRate: number;
+  matchPatterns: string[];
 }
 
 export const PRESET_VOICE_PERSONAS: VoicePersona[] = [
   {
-    id: 'google_us_english_gb',
-    name: 'Google US English (Anh - Anh)',
-    description: 'Giọng đọc Google US English chất lượng cao, ngữ âm chuẩn mực, phát âm tròn vành rõ chữ, trong sáng và cuốn hút nhất cho học sinh.',
-    accent: 'Google US English • en-US',
-    tag: 'Chất lượng cao',
-    recommendedPitch: 1.15,
-    recommendedRate: 0.88
+    id: 'callirrhoe',
+    name: 'Callirrhoe (Google AI Voice)',
+    description: 'Giọng đọc Google AI cao cấp: trong trẻo, tự nhiên, truyền cảm, ngữ điệu chuẩn Mỹ cực kỳ lôi cuốn cho học sinh lớp 4.',
+    accent: 'Anh - Mỹ (US AI)',
+    category: 'ai',
+    locale: 'en-US',
+    tag: 'Khuyên Dùng • Ngữ Điệu Mỹ',
+    badgeColor: 'bg-rose-100 text-rose-800 border-rose-300',
+    avatarBg: 'from-rose-500 to-pink-600',
+    avatar: 'CR',
+    recommendedPitch: 1.12,
+    recommendedRate: 0.88,
+    matchPatterns: ['callirrhoe', 'google us english', 'google', 'en-us']
+  },
+  {
+    id: 'aoede',
+    name: 'Aoede (Google Studio)',
+    description: 'Giọng nữ dịu dàng, êm ái, sâu lắng, phát âm chuẩn sư phạm tạo cảm giác ấm áp và gần gũi khi học từ vựng.',
+    accent: 'Anh - Mỹ (US Studio)',
+    category: 'ai',
+    locale: 'en-US',
+    tag: 'Dịu Dàng • Sư Phạm',
+    badgeColor: 'bg-purple-100 text-purple-800 border-purple-300',
+    avatarBg: 'from-purple-500 to-indigo-600',
+    avatar: 'AO',
+    recommendedPitch: 1.05,
+    recommendedRate: 0.85,
+    matchPatterns: ['aoede', 'google us english', 'en-us']
+  },
+  {
+    id: 'jenny',
+    name: 'Jenny (Natural English)',
+    description: 'Giọng nữ rành mạch, nhấn nhá rõ từng âm đuôi (/t/, /d/, /s/, /z/), chuẩn bài thi quốc tế TOEFL Primary và Cambridge YLE.',
+    accent: 'Anh - Mỹ (US Natural)',
+    category: 'us',
+    locale: 'en-US',
+    tag: 'Rõ Âm Đuôi • Luyện Thi',
+    badgeColor: 'bg-emerald-100 text-emerald-800 border-emerald-300',
+    avatarBg: 'from-emerald-500 to-teal-600',
+    avatar: 'JN',
+    recommendedPitch: 1.08,
+    recommendedRate: 0.86,
+    matchPatterns: ['jenny', 'aria', 'natural', 'zira', 'en-us']
+  },
+  {
+    id: 'samantha',
+    name: 'Samantha (Native American)',
+    description: 'Giọng nữ bản xứ New York thanh lịch, chuẩn mực, ngữ điệu giao tiếp đời thường tự nhiên và trôi chảy.',
+    accent: 'Anh - Mỹ (US Native)',
+    category: 'us',
+    locale: 'en-US',
+    tag: 'Bản Xứ • Tự Nhiên',
+    badgeColor: 'bg-amber-100 text-amber-800 border-amber-300',
+    avatarBg: 'from-amber-500 to-orange-600',
+    avatar: 'SM',
+    recommendedPitch: 1.06,
+    recommendedRate: 0.88,
+    matchPatterns: ['samantha', 'allison', 'susan', 'en-us']
+  },
+  {
+    id: 'victoria',
+    name: 'Victoria (British English RP)',
+    description: 'Giọng nữ Anh - Anh (UK) quý phái, chuẩn âm Oxford & Cambridge, phát âm nguyên âm rõ và tinh tế, cực tốt cho bài nghe SGK Bộ GD&ĐT.',
+    accent: 'Anh - Anh (UK BBC)',
+    category: 'uk',
+    locale: 'en-GB',
+    tag: 'Chuẩn BBC • Oxford RP',
+    badgeColor: 'bg-blue-100 text-blue-800 border-blue-300',
+    avatarBg: 'from-blue-600 to-indigo-700',
+    avatar: 'VC',
+    recommendedPitch: 1.10,
+    recommendedRate: 0.86,
+    matchPatterns: ['victoria', 'sonia', 'libby', 'hazel', 'google uk english female', 'en-gb']
+  },
+  {
+    id: 'karen',
+    name: 'Karen (Australian English)',
+    description: 'Giọng nữ Anh - Úc tươi sáng, năng động, phát âm dứt khoát giúp rèn luyện khả năng phản xạ nghe ngữ điệu quốc tế.',
+    accent: 'Anh - Úc (AU Accent)',
+    category: 'au',
+    locale: 'en-AU',
+    tag: 'Tươi Sáng • Ngữ Điệu Úc',
+    badgeColor: 'bg-cyan-100 text-cyan-800 border-cyan-300',
+    avatarBg: 'from-cyan-500 to-blue-600',
+    avatar: 'KR',
+    recommendedPitch: 1.08,
+    recommendedRate: 0.88,
+    matchPatterns: ['karen', 'catherine', 'natasha', 'en-au']
+  },
+  {
+    id: 'google_us',
+    name: 'Google US English (Neural)',
+    description: 'Giọng đọc công nghệ cao của Google, rành mạch, tốc độ ổn định, âm sắc tròn trịa chuẩn mực cho các bài kiểm tra nghe.',
+    accent: 'Anh - Mỹ (Google Neural)',
+    category: 'us',
+    locale: 'en-US',
+    tag: 'Mượt Mà • Ổn Định',
+    badgeColor: 'bg-pink-100 text-pink-800 border-pink-300',
+    avatarBg: 'from-pink-500 to-rose-600',
+    avatar: 'GG',
+    recommendedPitch: 1.14,
+    recommendedRate: 0.88,
+    matchPatterns: ['google us english', 'google english', 'google', 'en-us']
   }
 ];
 
 let selectedVoiceURI: string = '';
-let currentCustomPitch: number = 1.15; // Optimal pitch for Google US English clarity
+let currentCustomPitch: number = 1.12;
 
 export function getActiveVoicePersona(): VoicePersona {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('ta4_voice_persona');
+    if (saved) {
+      const found = PRESET_VOICE_PERSONAS.find(p => p.id === saved);
+      if (found) return found;
+    }
+  }
   return PRESET_VOICE_PERSONAS[0];
 }
 
-export function setActiveVoicePersona(_id: string) {
+export function setActiveVoicePersona(id: string) {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('ta4_voice_persona', 'google_us_english_gb');
+    localStorage.setItem('ta4_voice_persona', id);
+    const persona = PRESET_VOICE_PERSONAS.find(p => p.id === id);
+    if (persona) {
+      setGlobalPitch(persona.recommendedPitch);
+    }
+    // Dispatch custom event to notify components
+    window.dispatchEvent(new CustomEvent('voice-persona-changed', { detail: { personaId: id } }));
   }
 }
 
@@ -254,58 +369,68 @@ export function getAllSystemVoices(): SpeechSynthesisVoice[] {
 }
 
 /**
- * Filter solely Google US English high-quality voice, discarding all other voices as requested
+ * Filter female English voices available in the browser
  */
 export function getEnglishFemaleVoices(): SpeechSynthesisVoice[] {
   const all = getAllSystemVoices();
   if (all.length === 0) return [];
 
-  // Filter exclusively Google US English
-  const googleUS = all.filter(v =>
-    v.name.toLowerCase().includes('google us english') ||
-    (v.name.toLowerCase().includes('google') && v.lang === 'en-US')
-  );
+  // Exclude male voice keywords
+  const maleKeywords = ['male', 'david', 'mark', 'george', 'james', 'richard', 'guy', 'paul', 'daniel', 'stefan', 'reed'];
 
-  if (googleUS.length > 0) return googleUS;
+  const englishVoices = all.filter(v => {
+    const lang = v.lang.toLowerCase();
+    const name = v.name.toLowerCase();
+    if (!lang.startsWith('en')) return false;
+    // Check if not explicitly male
+    return !maleKeywords.some(mk => name.includes(mk));
+  });
 
-  // Fallback to any Google English voice
-  const googleAny = all.filter(v =>
-    v.name.toLowerCase().includes('google') && v.lang.startsWith('en')
-  );
-  if (googleAny.length > 0) return googleAny;
-
-  // Fallback if system has no Google voice
-  const enUS = all.filter(v => v.lang === 'en-US');
-  if (enUS.length > 0) return enUS;
-
-  return all.filter(v => v.lang.startsWith('en'));
+  return englishVoices.length > 0 ? englishVoices : all.filter(v => v.lang.startsWith('en'));
 }
 
-export function resolveActiveVoice(): SpeechSynthesisVoice | null {
+/**
+ * Resolve the optimal SpeechSynthesisVoice for a given persona or the active persona
+ */
+export function resolveActiveVoice(customPersonaId?: string): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices || voices.length === 0) return null;
 
-  // 1. Check user explicit choice if it matches Google
-  if (selectedVoiceURI) {
-    const found = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
-    if (found) return found;
+  const personaId = customPersonaId || getActiveVoicePersona().id;
+  const persona = PRESET_VOICE_PERSONAS.find(p => p.id === personaId) || PRESET_VOICE_PERSONAS[0];
+
+  // 1. If explicit voiceURI was selected and matches
+  if (!customPersonaId && selectedVoiceURI) {
+    const directVoice = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
+    if (directVoice) return directVoice;
   }
 
-  // 2. Exclusively prioritize Google US English
+  // 2. Try matching by persona's specific match patterns
+  for (const pattern of persona.matchPatterns) {
+    const match = voices.find(v => v.name.toLowerCase().includes(pattern.toLowerCase()));
+    if (match) return match;
+  }
+
+  // 3. Try matching by locale (e.g. en-GB for UK, en-AU for AU, en-US for US)
+  const localeMatches = voices.filter(v => v.lang.toLowerCase().replace('_', '-').startsWith(persona.locale.toLowerCase()));
+  if (localeMatches.length > 0) {
+    // Pick first female/non-male match
+    const femaleMatch = localeMatches.find(v => {
+      const name = v.name.toLowerCase();
+      return !['david', 'mark', 'george', 'james', 'male'].some(m => name.includes(m));
+    });
+    return femaleMatch || localeMatches[0];
+  }
+
+  // 4. Fallback to Google US English if available
   const googleUSEnglish = voices.find(v =>
     v.name.toLowerCase().includes('google us english') ||
-    (v.name.toLowerCase().includes('google') && v.lang === 'en-US')
+    (v.name.toLowerCase().includes('google') && v.lang.startsWith('en'))
   );
   if (googleUSEnglish) return googleUSEnglish;
 
-  // 3. Any Google English voice
-  const googleEnglish = voices.find(v =>
-    v.name.toLowerCase().includes('google') && v.lang.startsWith('en')
-  );
-  if (googleEnglish) return googleEnglish;
-
-  // 4. Default en-US or English
+  // 5. Default en-US or English
   const usVoice = voices.find(v => v.lang === 'en-US');
   if (usVoice) return usVoice;
 
@@ -313,9 +438,9 @@ export function resolveActiveVoice(): SpeechSynthesisVoice | null {
 }
 
 /**
- * Text-to-Speech locked to Google US English high quality voice
+ * Text-to-Speech speaking function with support for active persona or audition persona
  */
-export function speakWord(text: string, rate: number = 0.88): Promise<void> {
+export function speakWord(text: string, rate: number = 0.88, overridePersonaId?: string): Promise<void> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       resolve();
@@ -327,16 +452,19 @@ export function speakWord(text: string, rate: number = 0.88): Promise<void> {
     const cleanText = text.replace(/[/_\\*]/g, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
-    const voice = resolveActiveVoice();
+    const targetPersonaId = overridePersonaId || getActiveVoicePersona().id;
+    const persona = PRESET_VOICE_PERSONAS.find(p => p.id === targetPersonaId) || PRESET_VOICE_PERSONAS[0];
+
+    const voice = resolveActiveVoice(targetPersonaId);
     if (voice) {
       utterance.voice = voice;
-      utterance.lang = voice.lang || 'en-US';
+      utterance.lang = voice.lang || persona.locale;
     } else {
-      utterance.lang = 'en-US';
+      utterance.lang = persona.locale;
     }
 
     utterance.rate = rate;
-    const pitch = getGlobalPitch();
+    const pitch = overridePersonaId ? persona.recommendedPitch : getGlobalPitch();
     utterance.pitch = pitch;
     utterance.volume = 1.0;
 

@@ -31,7 +31,7 @@ import {
   CheckSquare
 } from 'lucide-react';
 import { EXAM_PAPERS, ExamPaper, ExamQuestion } from '../data/examData';
-import { sound, speakWord } from '../utils/audio';
+import { sound, speakWord, getActiveVoicePersona } from '../utils/audio';
 
 interface ExamStudioProps {
   speechRate: number;
@@ -82,9 +82,14 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
   const [reorderSelectedWords, setReorderSelectedWords] = useState<string[]>([]);
   const [availableScrambledWords, setAvailableScrambledWords] = useState<string[]>([]);
 
+  // Unscramble Letters Interactive State for current question
+  const [unscrambleSelectedLetters, setUnscrambleSelectedLetters] = useState<string[]>([]);
+  const [unscrambleAvailableLetters, setUnscrambleAvailableLetters] = useState<string[]>([]);
+
   // Audio Playback State
   const [isPlayingAudio, setIsPlayingAudio] = useState<boolean>(false);
   const [playingAudioRate, setPlayingAudioRate] = useState<number>(0.9);
+  const [showTranscript, setShowTranscript] = useState<boolean>(false);
 
   // Drill View State (by category)
   const [drillCategory, setDrillCategory] = useState<string>('all');
@@ -157,6 +162,29 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
       } else {
         setReorderSelectedWords([]);
         setAvailableScrambledWords([...(currentQuestion.scrambledWords || [])]);
+      }
+    }
+  }, [currentQuestion, userAnswers]);
+
+  // Sync Unscramble Letters when question changes
+  useEffect(() => {
+    if (currentQuestion && currentQuestion.type === 'unscramble_word' && currentQuestion.wordToUnscramble) {
+      const existingAnswer = userAnswers[currentQuestion.id];
+      const initialLetters = currentQuestion.wordToUnscramble.split('');
+      if (existingAnswer) {
+        const chosenLetters = existingAnswer.toUpperCase().split('');
+        setUnscrambleSelectedLetters(chosenLetters);
+        const remainders = [...initialLetters];
+        for (const ch of chosenLetters) {
+          const idx = remainders.findIndex(l => l.toUpperCase() === ch);
+          if (idx !== -1) {
+            remainders.splice(idx, 1);
+          }
+        }
+        setUnscrambleAvailableLetters(remainders);
+      } else {
+        setUnscrambleSelectedLetters([]);
+        setUnscrambleAvailableLetters(initialLetters);
       }
     }
   }, [currentQuestion, userAnswers]);
@@ -276,6 +304,53 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
     sound.playClick();
     setReorderSelectedWords([]);
     setAvailableScrambledWords([...(currentQuestion.scrambledWords || [])]);
+    setUserAnswers(prev => {
+      const copy = { ...prev };
+      delete copy[currentQuestion.id];
+      return copy;
+    });
+  };
+
+  // Unscramble Interactive Letter Pick
+  const handlePickUnscrambleLetter = (letter: string, index: number) => {
+    if (!currentQuestion) return;
+    sound.playClick();
+    const newSelected = [...unscrambleSelectedLetters, letter];
+    const newAvailable = [...unscrambleAvailableLetters];
+    newAvailable.splice(index, 1);
+
+    setUnscrambleSelectedLetters(newSelected);
+    setUnscrambleAvailableLetters(newAvailable);
+
+    const assembled = newSelected.join('').toUpperCase();
+    setUserAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: assembled
+    }));
+  };
+
+  const handleRemoveUnscrambleLetter = (letter: string, index: number) => {
+    if (!currentQuestion) return;
+    sound.playClick();
+    const newSelected = [...unscrambleSelectedLetters];
+    newSelected.splice(index, 1);
+    const newAvailable = [...unscrambleAvailableLetters, letter];
+
+    setUnscrambleSelectedLetters(newSelected);
+    setUnscrambleAvailableLetters(newAvailable);
+
+    const assembled = newSelected.join('').toUpperCase();
+    setUserAnswers(prev => ({
+      ...prev,
+      [currentQuestion.id]: assembled
+    }));
+  };
+
+  const handleResetUnscramble = () => {
+    if (!currentQuestion || !currentQuestion.wordToUnscramble) return;
+    sound.playClick();
+    setUnscrambleSelectedLetters([]);
+    setUnscrambleAvailableLetters(currentQuestion.wordToUnscramble.split(''));
     setUserAnswers(prev => {
       const copy = { ...prev };
       delete copy[currentQuestion.id];
@@ -483,7 +558,7 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
                 )}
               </div>
               <p className="text-xs text-slate-500 font-medium hidden sm:block">
-                Học kì 1 &amp; Học kì 2 · 10 bộ đề thi chuẩn Bộ GD &amp; ĐT · Nghe chuẩn Audio · Giải thích sâu sắc dễ nhớ
+                Học kì 1 &amp; Học kì 2 · {EXAM_PAPERS.length} bộ đề thi chuẩn Bộ GD &amp; ĐT · Nghe chuẩn Audio · Giải thích sâu sắc dễ nhớ
               </p>
             </div>
           </div>
@@ -678,13 +753,20 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
                           {exam.icon}
                         </div>
                         <div>
-                          <div className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
-                            Đề Số {idx + 1} · {exam.academicYear}
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <span className="text-xs font-bold text-indigo-600 uppercase tracking-wider">
+                              Đề Số {idx + 1} · {exam.academicYear}
+                            </span>
+                            {(exam.id.startsWith('midterm1-exam') || exam.id.startsWith('term1-exam')) && !exam.id.includes('legacy') && (
+                              <span className="text-[10px] bg-gradient-to-r from-amber-500 to-orange-500 text-white font-black px-2 py-0.5 rounded-full shadow-2xs">
+                                ⭐ Chuẩn Loigiaihay.com
+                              </span>
+                            )}
                           </div>
                           <h4 className="text-lg font-black text-slate-900 leading-snug">
                             {exam.title}
                           </h4>
-                          <div className="text-xs text-slate-500 font-medium">
+                          <div className="text-xs text-slate-500 font-medium mt-0.5">
                             {exam.subTitle}
                           </div>
                         </div>
@@ -724,16 +806,17 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
                       </div>
                     </div>
 
-                    {/* Question breakdown teaser */}
-                    <div className="space-y-1 mb-4 text-xs text-slate-600">
-                      <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                        <span className="text-emerald-500">✓</span>
-                        <span>Đa dạng bài tập: Trắc nghiệm, Từ khác loại, Phát âm, Đọc hiểu, Sắp xếp câu</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-slate-700 font-medium">
-                        <span className="text-indigo-500">✓</span>
-                        <span>Có nút nghe Audio chuẩn và giải thích chi tiết từng câu</span>
-                      </div>
+                    {/* Feature tags */}
+                    <div className="flex flex-wrap gap-1.5 mb-4 text-[11px]">
+                      <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-bold border border-indigo-100 flex items-center gap-1">
+                        <span>🎧</span> 100% Audio Nghe
+                      </span>
+                      <span className="px-2.5 py-1 rounded-lg bg-emerald-50 text-emerald-700 font-bold border border-emerald-100 flex items-center gap-1">
+                        <span>🖼️</span> Tranh Vẽ & Lịch
+                      </span>
+                      <span className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 font-bold border border-amber-100 flex items-center gap-1">
+                        <span>💡</span> Lời Giải Chi Tiết
+                      </span>
                     </div>
 
                     {/* Action Buttons */}
@@ -935,49 +1018,319 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
               </div>
             )}
 
-            {/* Audio Listening Box if listening type */}
+            {/* Enhanced Audio Listening Console if listening type */}
             {currentQuestion.audioText && (
-              <div className="mb-6 p-4 rounded-2xl bg-indigo-50 border border-indigo-200 flex flex-wrap items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center">
-                    <Headphones className="w-5 h-5" />
+              <div className="mb-6 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-indigo-50 via-sky-50 to-indigo-50/70 border-2 border-indigo-200/90 shadow-xs">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-indigo-100">
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-11 h-11 rounded-2xl flex items-center justify-center text-white shadow-xs transition-colors ${
+                        isPlayingAudio ? 'bg-rose-500 animate-pulse' : 'bg-indigo-600'
+                      }`}
+                    >
+                      <Headphones className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-black text-indigo-950 uppercase tracking-wider">
+                          Bài Nghe Audio (Listening)
+                        </span>
+                        <span className="text-[10px] bg-rose-100 text-rose-800 font-extrabold px-2 py-0.5 rounded-full border border-rose-200 shadow-2xs">
+                          🎙️ Giọng {getActiveVoicePersona().name.split(' ')[0]}
+                        </span>
+                      </div>
+                      <p className="text-xs text-slate-600 font-medium mt-0.5">
+                        {isPlayingAudio ? '🔊 Đang phát âm thanh mẫu chuẩn...' : 'Bấm nghe thật kỹ để tìm đáp án chính xác'}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <div className="text-xs font-bold text-indigo-900">
-                      Bài nghe (Listening Audio)
-                    </div>
-                    <div className="text-xs text-indigo-600">
-                      Lắng nghe câu văn thật kỹ để chọn đáp án đúng
-                    </div>
+
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      onClick={() => handlePlayAudio(currentQuestion.audioText!, 0.88)}
+                      disabled={isPlayingAudio}
+                      className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-black transition flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                    >
+                      <Volume2 className="w-4 h-4" />
+                      <span>Nghe chuẩn</span>
+                    </button>
+
+                    <button
+                      onClick={() => handlePlayAudio(currentQuestion.audioText!, 0.7)}
+                      disabled={isPlayingAudio}
+                      className="px-3.5 py-2 rounded-xl bg-white hover:bg-slate-100 text-indigo-700 text-xs font-bold transition flex items-center gap-1 border border-indigo-200 shadow-2xs"
+                      title="Nghe tốc độ chậm"
+                    >
+                      <span>🐢</span>
+                      <span>Nghe chậm (0.7x)</span>
+                    </button>
+
+                    {currentQuestion.audioTranscript && (
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          setShowTranscript(!showTranscript);
+                        }}
+                        className={`px-3 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1 border shadow-2xs ${
+                          showTranscript
+                            ? 'bg-amber-100 text-amber-900 border-amber-300 ring-2 ring-amber-200'
+                            : 'bg-white hover:bg-slate-50 text-slate-700 border-slate-200'
+                        }`}
+                        title="Xem hoặc ẩn lời thoại bài nghe"
+                      >
+                        <span>📄</span>
+                        <span>{showTranscript ? 'Ẩn lời thoại' : 'Lời thoại & Dịch'}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => handlePlayAudio(currentQuestion.audioText!, 0.88)}
-                    disabled={isPlayingAudio}
-                    className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold transition flex items-center gap-1.5 shadow-xs disabled:opacity-50"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>Nghe chuẩn</span>
-                  </button>
+                {/* Animated sound wave equalizer when playing */}
+                {isPlayingAudio && (
+                  <div className="flex items-center gap-1.5 justify-center py-2.5 bg-white/60 rounded-xl my-2">
+                    <span className="text-[11px] font-bold text-indigo-700 mr-2 flex items-center gap-1">
+                      <span className="w-2 h-2 rounded-full bg-rose-500 animate-ping inline-block" />
+                      Đang đọc giọng bản ngữ:
+                    </span>
+                    <div className="flex items-end gap-1 h-5">
+                      {[35, 80, 100, 50, 90, 40, 75, 60, 95, 30].map((h, i) => (
+                        <span
+                          key={i}
+                          style={{ height: `${h}%` }}
+                          className="w-1 bg-indigo-600 rounded-full animate-pulse inline-block"
+                        />
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                  <button
-                    onClick={() => handlePlayAudio(currentQuestion.audioText!, 0.7)}
-                    disabled={isPlayingAudio}
-                    className="px-3 py-2 rounded-xl bg-white hover:bg-slate-100 text-indigo-700 text-xs font-bold transition flex items-center gap-1 border border-indigo-200"
-                    title="Nghe tốc độ chậm"
-                  >
-                    <span>🐢</span>
-                    <span>Nghe chậm</span>
-                  </button>
-                </div>
+                {/* Expandable Transcript & Vietnamese Translation */}
+                {showTranscript && currentQuestion.audioTranscript && (
+                  <div className="mt-3 p-3.5 bg-white rounded-2xl border border-indigo-100 text-xs text-slate-700 space-y-1.5 animate-in fade-in shadow-2xs">
+                    <div className="font-black text-indigo-900 flex items-center gap-1.5 text-xs">
+                      <span>📝</span>
+                      <span>Lời thoại bài nghe & Tạm dịch tiếng Việt:</span>
+                    </div>
+                    <p className="leading-relaxed font-serif text-slate-800 bg-slate-50/90 p-3 rounded-xl border border-slate-200 text-xs sm:text-sm">
+                      {currentQuestion.audioTranscript}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Question Prompt */}
             <div className="mb-6">
-              {currentQuestion.imageEmoji && (
+              {/* Visual Cards Display (Calendar Flip Cards & Picture Cards) */}
+              {currentQuestion.visualCards && currentQuestion.visualCards.length > 0 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-slate-50/90 border border-slate-200/90 shadow-2xs">
+                  <div className="text-xs font-bold text-slate-600 uppercase tracking-wider mb-3.5 flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <span>🖼️</span>
+                      <span>Hình ảnh trực quan (Bấm trực tiếp vào thẻ để chọn):</span>
+                    </span>
+                    <span className="text-[11px] text-indigo-600 font-extrabold hidden sm:inline">
+                      {currentQuestion.visualCards[0].cardType === 'calendar' ? '📅 Thẻ Lịch Ngày Tháng' : '🎨 Thẻ Tranh & Quốc Kỳ'}
+                    </span>
+                  </div>
+
+                  {/* Visual Cards Adaptive Grid */}
+                  {currentQuestion.visualCards.every(c => c.cardType === 'calendar') ? (
+                    // 100% CALENDAR FLIP CARDS GRID (JAN 15, APR 02, JUL 26, MAR 6)
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                      {currentQuestion.visualCards.map((c) => {
+                        const optionMatches = currentQuestion.options?.find(o => {
+                          const norm = o.trim();
+                          return (
+                            norm.startsWith(c.label + '.') ||
+                            norm.startsWith(c.label + ' ') ||
+                            norm.startsWith('Hình ' + c.label) ||
+                            norm.startsWith('Tranh ' + c.label) ||
+                            norm.includes(`(${c.label})`) ||
+                            norm.includes(`Hình ${c.label}`) ||
+                            norm.includes(`Tranh ${c.label}`) ||
+                            (c.dayNumber && norm.includes(c.dayNumber))
+                          );
+                        });
+                        const isSelected = optionMatches && userAnswers[currentQuestion.id] === optionMatches;
+                        const isChecked = checkedQuestions[currentQuestion.id];
+                        const isCorrect = optionMatches && optionMatches.trim().toLowerCase() === currentQuestion.correctAnswer.toString().trim().toLowerCase();
+
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              if (optionMatches) handleSelectOption(optionMatches);
+                            }}
+                            className={`group relative text-center rounded-2xl overflow-hidden transition-all duration-200 border-2 cursor-pointer shadow-xs hover:shadow-md hover:-translate-y-1 ${
+                              isChecked
+                                ? isCorrect
+                                  ? 'border-emerald-500 ring-4 ring-emerald-200 bg-white'
+                                  : isSelected
+                                  ? 'border-rose-400 ring-4 ring-rose-200 bg-white'
+                                  : 'border-slate-200 bg-white opacity-70'
+                                : isSelected
+                                ? 'border-indigo-600 ring-4 ring-indigo-200 bg-white scale-102'
+                                : 'border-slate-200 bg-white hover:border-slate-300'
+                            }`}
+                          >
+                            {/* Ring binders simulation at top */}
+                            <div className="bg-slate-800 h-3 flex justify-around px-3 items-center">
+                              {[1, 2, 3, 4, 5].map(ring => (
+                                <span key={ring} className="w-1.5 h-2 bg-slate-400 rounded-full -mt-1 block ring-1 ring-slate-900" />
+                              ))}
+                            </div>
+
+                            {/* Red Month Header Ribbon */}
+                            <div className={`py-1.5 px-2 bg-gradient-to-r ${c.bgGradient || 'from-rose-500 to-red-600'} text-white font-black text-xs uppercase tracking-wider`}>
+                              {c.monthName || 'MONTH'}
+                            </div>
+
+                            {/* Calendar Day Face */}
+                            <div className="py-4 px-2 bg-white relative">
+                              <div className="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight">
+                                {c.dayNumber || c.title}
+                              </div>
+                              {isChecked && isCorrect && (
+                                <span className="absolute top-1 right-2 text-emerald-600 font-black text-sm">✓</span>
+                              )}
+                            </div>
+
+                            {/* Label Pill (Hình A, Hình B, Hình C, Hình D) */}
+                            <div className={`py-1 text-xs font-black border-t transition-colors ${
+                              isChecked && isCorrect
+                                ? 'bg-emerald-600 text-white border-emerald-600'
+                                : isSelected
+                                ? 'bg-indigo-600 text-white border-indigo-600'
+                                : 'bg-slate-100 text-slate-700 border-slate-200 group-hover:bg-indigo-50 group-hover:text-indigo-700'
+                            }`}>
+                              {c.label}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    // MIXED / PICTURE & FLAG CARDS GRID (A - F)
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2.5">
+                      {currentQuestion.visualCards.map((c) => {
+                        const optionMatches = currentQuestion.options?.find(o => {
+                          const norm = o.trim();
+                          return (
+                            norm.startsWith(c.label + '.') ||
+                            norm.startsWith(c.label + ' ') ||
+                            norm.startsWith('Hình ' + c.label) ||
+                            norm.startsWith('Tranh ' + c.label) ||
+                            norm.includes(`(${c.label})`) ||
+                            norm.includes(`Hình ${c.label}`) ||
+                            norm.includes(`Tranh ${c.label}`) ||
+                            (c.title && norm.toLowerCase().includes(c.title.toLowerCase()))
+                          );
+                        });
+                        const isSelected = optionMatches && userAnswers[currentQuestion.id] === optionMatches;
+                        const isChecked = checkedQuestions[currentQuestion.id];
+                        const isCorrect = optionMatches && optionMatches.trim().toLowerCase() === currentQuestion.correctAnswer.toString().trim().toLowerCase();
+
+                        return (
+                          <button
+                            key={c.id}
+                            type="button"
+                            onClick={() => {
+                              if (optionMatches) handleSelectOption(optionMatches);
+                            }}
+                            className={`p-2.5 rounded-2xl text-center border-2 transition-all cursor-pointer shadow-2xs hover:-translate-y-0.5 relative overflow-hidden flex flex-col justify-between ${
+                              isChecked
+                                ? isCorrect
+                                  ? 'border-emerald-500 bg-emerald-50/80 ring-2 ring-emerald-300'
+                                  : isSelected
+                                  ? 'border-rose-400 bg-rose-50/80 ring-2 ring-rose-200'
+                                  : 'border-slate-200 bg-white opacity-70'
+                                : isSelected
+                                ? 'border-indigo-600 bg-indigo-50/70 ring-2 ring-indigo-200 shadow-xs'
+                                : 'border-slate-200 bg-white hover:bg-slate-50'
+                            }`}
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className={`w-5 h-5 rounded-md font-black text-xs inline-flex items-center justify-center shadow-2xs ${
+                                isSelected ? 'bg-indigo-600 text-white' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                {c.label}
+                              </span>
+                              {isChecked && isCorrect && (
+                                <span className="bg-emerald-600 text-white rounded-full w-4 h-4 text-[10px] flex items-center justify-center font-bold">✓</span>
+                              )}
+                            </div>
+
+                            {/* Render based on cardType */}
+                            {c.cardType === 'calendar' ? (
+                              <div className="my-1 border rounded-xl overflow-hidden shadow-2xs bg-white">
+                                <div className="bg-rose-500 text-white text-[9px] font-black uppercase py-0.5 px-1">
+                                  {c.monthName || 'MONTH'}
+                                </div>
+                                <div className="text-xl font-black text-slate-900 py-1">
+                                  {c.dayNumber || c.title}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="my-1.5 flex flex-col items-center">
+                                <div className="text-3xl mb-1 drop-shadow-xs">{c.emoji || '🖼️'}</div>
+                                <div className="text-[11px] font-black text-slate-800 line-clamp-2 leading-tight">
+                                  {c.title}
+                                </div>
+                              </div>
+                            )}
+
+                            <span className="text-[10px] text-slate-400 font-bold block truncate mt-1">
+                              {c.cardType === 'calendar' ? 'Tờ lịch' : c.cardType === 'flag' ? 'Quốc kỳ' : 'Tranh ảnh'}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Look and complete letter puzzle strip */}
+              {currentQuestion.letterBlanks && (
+                <div className="mb-5 p-4 rounded-3xl bg-gradient-to-r from-amber-50 via-sky-50 to-indigo-50 border border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-2xl bg-white border border-slate-200 shadow-sm flex items-center justify-center text-3xl shrink-0">
+                      {currentQuestion.imageEmoji || '🎨'}
+                    </div>
+                    <div>
+                      <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+                        Nhìn tranh và điền chữ cái còn thiếu:
+                      </div>
+                      <div className="text-sm font-extrabold text-slate-800">
+                        Nghĩa tiếng Việt: <span className="text-indigo-700 font-black">{currentQuestion.letterBlanks.meaning}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Letter tiles */}
+                  <div className="flex items-center gap-1.5 self-center sm:self-auto bg-white/90 p-2 rounded-2xl border border-slate-200 shadow-xs">
+                    {currentQuestion.letterBlanks.fullWord.split('').map((char, cIdx) => {
+                      const isBlank = currentQuestion.letterBlanks!.blankLetters.includes(char);
+                      return (
+                        <div
+                          key={cIdx}
+                          className={`w-9 h-10 rounded-xl font-black text-base flex items-center justify-center uppercase transition-all shadow-2xs ${
+                            isBlank
+                              ? 'border-2 border-dashed border-amber-400 bg-amber-50 text-amber-900 animate-pulse'
+                              : 'bg-indigo-600 text-white shadow-xs'
+                          }`}
+                        >
+                          {checkedQuestions[currentQuestion.id] || userAnswers[currentQuestion.id] ? char : (isBlank ? '_' : char)}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {currentQuestion.imageEmoji && !currentQuestion.letterBlanks && (
                 <div className="mb-4 inline-flex items-center gap-3 p-3 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-100/70 border border-amber-200 rounded-2xl shadow-xs">
                   <span className="text-3xl sm:text-4xl">{currentQuestion.imageEmoji}</span>
                   <div>
@@ -1014,22 +1367,906 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
                   <div className="flex items-center justify-between mb-2">
                     <span className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
                       <span>📦</span>
-                      <span>Ngân hàng từ vựng (Word Bank):</span>
+                      <span>Ngân hàng từ vựng (Word Bank - Bấm trực tiếp để điền):</span>
                     </span>
-                    <span className="text-[11px] text-emerald-700 font-medium">
+                    <span className="text-[11px] text-emerald-700 font-medium hidden sm:inline">
                       Chọn 1 từ thích hợp điền vào vị trí trống
                     </span>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {currentQuestion.wordBank.map((word, wbIdx) => (
-                      <span
-                        key={wbIdx}
-                        className="px-3 py-1.5 rounded-xl bg-white border border-emerald-300 shadow-xs font-bold text-emerald-800 text-xs flex items-center gap-1"
-                      >
-                        <span className="text-emerald-500">✏️</span>
-                        <span>{word}</span>
-                      </span>
-                    ))}
+                    {currentQuestion.wordBank.map((word, wbIdx) => {
+                      const isChosen = userAnswers[currentQuestion.id]?.toLowerCase() === word.toLowerCase();
+                      return (
+                        <button
+                          key={wbIdx}
+                          type="button"
+                          onClick={() => {
+                            sound.playClick();
+                            handleSelectOption(word);
+                          }}
+                          className={`px-3 py-1.5 rounded-xl border text-xs font-bold transition flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs ${
+                            isChosen
+                              ? 'bg-emerald-600 text-white border-emerald-700 ring-2 ring-emerald-300 font-black'
+                              : 'bg-white hover:bg-emerald-100 text-emerald-800 border-emerald-300'
+                          }`}
+                        >
+                          <span className={isChosen ? 'text-white' : 'text-emerald-500'}>✏️</span>
+                          <span>{word}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL EXAM BOARD 1: David & Susan Dialogue (Đề 1, Câu 5 - 9) */}
+              {currentExam.id === 'midterm1-exam1' && currentQuestion.questionNumber >= 5 && currentQuestion.questionNumber <= 9 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-sky-50/50 to-white border-2 border-indigo-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-100">
+                    <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>💬</span>
+                      <span>Hội thoại nghe gốc: David & Susan (Bài nghe II)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
+                      Đang làm vị trí ({currentQuestion.questionNumber - 4})
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">👦</span>
+                      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 text-slate-800 shadow-2xs flex-1">
+                        <span className="font-bold text-blue-800">David:</span> What day is it, Susan?
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-700 font-bold flex items-center justify-center shrink-0 text-xs">👧</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 5 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-pink-800">Susan:</span> It’s <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(1) ________</span>.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">👦</span>
+                      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 text-slate-800 shadow-2xs flex-1">
+                        <span className="font-bold text-blue-800">David:</span> What do you do on Monday?
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-700 font-bold flex items-center justify-center shrink-0 text-xs">👧</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 6 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-pink-800">Susan:</span> Well, I have <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(2) ________</span> classes in the morning.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">👦</span>
+                      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 text-slate-800 shadow-2xs flex-1">
+                        <span className="font-bold text-blue-800">David:</span> How about the afternoon?
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-700 font-bold flex items-center justify-center shrink-0 text-xs">👧</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 7 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-pink-800">Susan:</span> I <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(3) ________</span> with my sister, Sandra. She loves swimming.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">👦</span>
+                      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 text-slate-800 shadow-2xs flex-1">
+                        <span className="font-bold text-blue-800">David:</span> What about Tuesday afternoon? Are you free?
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-700 font-bold flex items-center justify-center shrink-0 text-xs">👧</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 8 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-pink-800">Susan:</span> No. I go to the <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(4) ________</span> every Tuesday afternoon. But I am free on Wednesday afternoon.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-xs">👦</span>
+                      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 text-slate-800 shadow-2xs flex-1">
+                        <span className="font-bold text-blue-800">David:</span> That is great. There is a <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(5) ________</span> match on Wednesday afternoon. Do you want to go with me?
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL EXAM BOARD 2: Miss Hien & Mai Classroom Dialogue (Đề 1, Câu 25 - 29) */}
+              {currentExam.id === 'midterm1-exam1' && currentQuestion.questionNumber >= 25 && currentQuestion.questionNumber <= 29 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border-2 border-amber-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-amber-200/60">
+                    <span className="text-xs font-black text-amber-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🏫</span>
+                      <span>Hội thoại trên lớp: Cô Hiền & Lớp 4A (Bài IV. Read and complete)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                      Đang làm vị trí ({currentQuestion.questionNumber - 24})
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 text-xs">👩‍🏫</span>
+                      <div className="bg-white p-2.5 rounded-2xl border border-slate-200 text-slate-800 shadow-2xs flex-1">
+                        <span className="font-bold text-indigo-800">Miss Hien:</span> Good morning class.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center shrink-0 text-xs">🎒</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 25 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-emerald-800">Class:</span> Good <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(1) ________</span>, Miss Hien. How are you?
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 text-xs">👩‍🏫</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 26 || currentQuestion.questionNumber === 27 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-indigo-800">Miss Hien:</span> I’m <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(2) ________</span>, thank you. What is the <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(3) ________</span> today, Mai?
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-pink-100 text-pink-700 font-bold flex items-center justify-center shrink-0 text-xs">👧</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 28 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-pink-800">Mai:</span> It’s the sixteenth of <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(4) ________</span>.
+                      </div>
+                    </div>
+                    <div className="flex items-start gap-2.5">
+                      <span className="w-6 h-6 rounded-lg bg-indigo-100 text-indigo-700 font-bold flex items-center justify-center shrink-0 text-xs">👩‍🏫</span>
+                      <div className={`p-2.5 rounded-2xl border shadow-2xs flex-1 ${currentQuestion.questionNumber === 29 ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-200 font-bold text-amber-950' : 'bg-white border-slate-200 text-slate-800'}`}>
+                        <span className="font-bold text-indigo-800">Miss Hien:</span> Thank you. It’s Mr Loc’s <span className="inline-block px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-black mx-1">(5) ________</span> tomorrow.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL EXAM BOARD 3: Matching Board Column A & B (Đề 1, Câu 30 - 34) */}
+              {currentExam.id === 'midterm1-exam1' && currentQuestion.questionNumber >= 30 && currentQuestion.questionNumber <= 34 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-sky-50 via-indigo-50/50 to-white border-2 border-sky-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-sky-200/60">
+                    <span className="text-xs font-black text-sky-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🔗</span>
+                      <span>Bảng nối câu Cột A và Cột B (Bài V. Read and match)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-sky-800 bg-sky-100 px-2.5 py-0.5 rounded-full">
+                      Đang làm câu số {currentQuestion.questionNumber - 29}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+                      <div className="font-black text-indigo-900 pb-1 border-b border-slate-100 flex items-center gap-1.5 text-xs">
+                        <span>🔵</span>
+                        <span>CỘT A (Câu Hỏi)</span>
+                      </div>
+                      {[
+                        { num: 1, text: 'What day is it today?' },
+                        { num: 2, text: 'What nationality are you?' },
+                        { num: 3, text: 'Where do you come from?' },
+                        { num: 4, text: "What's your name?" },
+                        { num: 5, text: 'What can you do?' }
+                      ].map(row => (
+                        <div
+                          key={row.num}
+                          className={`p-2 rounded-xl flex items-center gap-2 transition ${
+                            currentQuestion.questionNumber - 29 === row.num
+                              ? 'bg-indigo-100 border border-indigo-400 font-black text-indigo-950 ring-2 ring-indigo-200'
+                              : 'text-slate-700'
+                          }`}
+                        >
+                          <span className="w-5 h-5 rounded-md bg-indigo-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                            {row.num}
+                          </span>
+                          <span className="truncate">{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+                      <div className="font-black text-emerald-900 pb-1 border-b border-slate-100 flex items-center gap-1.5 text-xs">
+                        <span>🟢</span>
+                        <span>CỘT B (Câu Trả Lời)</span>
+                      </div>
+                      {[
+                        { letter: 'A', text: 'I come from Thailand.' },
+                        { letter: 'B', text: 'My name is Linda.' },
+                        { letter: 'C', text: 'I can play football.' },
+                        { letter: 'D', text: 'Today is Monday.' },
+                        { letter: 'E', text: 'I’m Vietnamese.' }
+                      ].map(row => (
+                        <div
+                          key={row.letter}
+                          className="p-2 rounded-xl flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-200"
+                        >
+                          <span className="w-5 h-5 rounded-md bg-emerald-600 text-white font-bold flex items-center justify-center shrink-0 text-xs">
+                            {row.letter}
+                          </span>
+                          <span className="truncate">{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL EXAM BOARD 4: Trang's Profile Board (Đề 2, Câu 7 - 11) */}
+              {currentExam.id === 'midterm1-exam2' && currentQuestion.questionNumber >= 7 && currentQuestion.questionNumber <= 11 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-white border-2 border-emerald-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-emerald-200/60">
+                    <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🏫</span>
+                      <span>Bài nghe giới thiệu của Trang (Đề 2 - Sunshine Primary School)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      Đang điền chỗ trống ({currentQuestion.questionNumber - 6})
+                    </span>
+                  </div>
+                  <div className="bg-white p-3.5 rounded-2xl border border-slate-200 text-slate-800 text-xs sm:text-sm leading-relaxed shadow-2xs mb-3 font-serif">
+                    <p>
+                      "Good morning! My name is Trang. I come from Vietnam and now I live in Hanoi. I am a{' '}
+                      <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 7 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100 text-slate-800'}`}>(1) ________</span>{' '}
+                      at Sunshine Primary School. I'm in class 4A and I have lots of cute{' '}
+                      <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 8 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100 text-slate-800'}`}>(2) ________</span>.
+                    </p>
+                    <p className="mt-2">
+                      This is a picture of them. This is Jamie. He comes from New York,{' '}
+                      <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 9 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100 text-slate-800'}`}>(3) ________</span>.
+                      And this is Nga and this is Han. They are from Vietnam. Next to them are Linda and Harry. Linda comes from{' '}
+                      <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 10 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100 text-slate-800'}`}>(4) ________</span>, England and Harry is from{' '}
+                      <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 11 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100 text-slate-800'}`}>(5) ________</span>.
+                      They are all my good friends."
+                    </p>
+                  </div>
+                  {/* Friends badges */}
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700 flex items-center gap-1 shadow-2xs">
+                      <span>👧 Trang</span> <span className="text-[10px] text-slate-400">(Hanoi, VN 🇻🇳)</span>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700 flex items-center gap-1 shadow-2xs">
+                      <span>👦 Jamie</span> <span className="text-[10px] text-slate-400">(New York, USA 🇺🇸)</span>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700 flex items-center gap-1 shadow-2xs">
+                      <span>👧 Nga & Han</span> <span className="text-[10px] text-slate-400">(Vietnam 🇻🇳)</span>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700 flex items-center gap-1 shadow-2xs">
+                      <span>👧 Linda</span> <span className="text-[10px] text-slate-400">(London, UK 🇬🇧)</span>
+                    </span>
+                    <span className="px-2.5 py-1 rounded-xl bg-white border border-slate-200 font-bold text-slate-700 flex items-center gap-1 shadow-2xs">
+                      <span>👦 Harry</span> <span className="text-[10px] text-slate-400">(Korea 🇰🇷)</span>
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL EXAM BOARD 5: Detective Inspector for Error Correction (Đề 2, Câu 22 - 26) */}
+              {currentQuestion.type === 'error_correction' && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-purple-50 via-pink-50 to-white border-2 border-purple-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-2.5 pb-2 border-b border-purple-100">
+                    <span className="text-xs font-black text-purple-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🕵️‍♂️</span>
+                      <span>Thám tử tìm lỗi sai: Đọc kỹ câu và chọn phương án sửa đúng</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                      Mỗi câu có 1 lỗi duy nhất
+                    </span>
+                  </div>
+                  <div className="p-3 bg-white rounded-2xl border border-purple-200 text-center shadow-2xs">
+                    <span className="text-[11px] text-purple-600 font-bold uppercase block mb-1">Câu văn cần soi xét lỗi ngữ pháp:</span>
+                    <span className="text-base sm:text-lg font-black text-purple-950 font-serif tracking-wide">
+                      "{currentQuestion.questionPrompt.match(/"([^"]+)"/)?.[1] || currentQuestion.questionPrompt}"
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 3 - Bảng nghe nối câu II (Câu 7 - 12) */}
+              {currentExam.id === 'midterm1-exam3' && currentQuestion.questionNumber >= 7 && currentQuestion.questionNumber <= 12 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-50 via-sky-50 to-white border-2 border-sky-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-sky-200/60">
+                    <span className="text-xs font-black text-sky-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🎧</span>
+                      <span>Bảng nối bài nghe II: Listen and match (Đề 3)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-sky-800 bg-sky-100 px-2.5 py-0.5 rounded-full">
+                      Đang làm câu số {currentQuestion.questionNumber - 6}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+                      <div className="font-black text-blue-900 pb-1 border-b border-slate-100 text-xs">VẾ ĐẦU (1 - 6)</div>
+                      {[
+                        { num: 1, text: 'My name is' },
+                        { num: 2, text: 'Joe' },
+                        { num: 3, text: 'I’m from' },
+                        { num: 4, text: 'Good morning,' },
+                        { num: 5, text: 'Jane' },
+                        { num: 6, text: 'Good evening,' }
+                      ].map(row => (
+                        <div key={row.num} className={`p-2 rounded-xl flex items-center gap-2 ${currentQuestion.questionNumber - 6 === row.num ? 'bg-sky-100 text-sky-950 font-black ring-2 ring-sky-300' : 'text-slate-700'}`}>
+                          <span className="w-5 h-5 rounded-md bg-sky-600 text-white font-bold flex items-center justify-center text-xs shrink-0">{row.num}</span>
+                          <span>{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+                      <div className="font-black text-emerald-900 pb-1 border-b border-slate-100 text-xs">VẾ NỐI (a - f)</div>
+                      {[
+                        { char: 'a', text: 'Nam.' },
+                        { char: 'b', text: 'miss Mai.' },
+                        { char: 'c', text: 'comes from Japan.' },
+                        { char: 'd', text: 'Jenny.' },
+                        { char: 'e', text: 'is my friend.' },
+                        { char: 'f', text: 'Viet Nam.' }
+                      ].map(row => (
+                        <div key={row.char} className="p-2 rounded-xl flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-200">
+                          <span className="w-5 h-5 rounded-md bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shrink-0">{row.char}</span>
+                          <span>{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 3 - Hội thoại Anna & Tom (Câu 24 - 28) */}
+              {currentExam.id === 'midterm1-exam3' && currentQuestion.questionNumber >= 24 && currentQuestion.questionNumber <= 28 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-sky-50/40 to-white border-2 border-indigo-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-100">
+                    <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>💬</span>
+                      <span>Hội thoại làm quen: Anna & Tom (Bài III. Read and complete)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
+                      Vị trí ({currentQuestion.questionNumber - 23})
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-pink-700">Anna:</span> Hi. I’m Anna. What’s your <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 24 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(1) ________</span>?
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-blue-700">Tom:</span> My name is Tom. Nice to meet you.
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-pink-700">Anna:</span> Nice to <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 25 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(2) ________</span> you, too.
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-blue-700">Tom:</span> What is your nationality?
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-pink-700">Anna:</span> I’m English. <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 26 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(3) ________</span> you?
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-blue-700">Tom:</span> I’m American. Can you <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 27 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(4) ________</span> any English songs?
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-pink-700">Anna:</span> Of course. I can sing and dance. Do you like playing the piano, Tom?
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 text-slate-800">
+                      <span className="font-bold text-blue-700">Tom:</span> Yes, I <span className={`inline-block px-2 py-0.5 rounded-md font-bold mx-1 ${currentQuestion.questionNumber === 28 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(5) ________</span>, but I don’t know how to play it. I want to learn to play the piano.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 4 - Bài nghe 3 đoạn hội thoại (Câu 1 - 6) */}
+              {currentExam.id === 'midterm1-exam4' && currentQuestion.questionNumber >= 1 && currentQuestion.questionNumber <= 6 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-purple-50 via-pink-50/50 to-white border-2 border-purple-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-purple-200/60">
+                    <span className="text-xs font-black text-purple-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🎧</span>
+                      <span>Bài nghe điền từ: Nam - Julia & Dan - Jane (Đề 4)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-purple-700 bg-purple-100 px-2.5 py-0.5 rounded-full">
+                      Câu hỏi số {currentQuestion.questionNumber}
+                    </span>
+                  </div>
+                  <div className="space-y-2 text-xs sm:text-sm">
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200">
+                      <span className="text-[11px] font-bold text-purple-600 block mb-1">Đoạn 1: Nam & Julia (Câu 1 - 2)</span>
+                      <div><span className="font-bold text-blue-700">Nam:</span> What can you do, Julia?</div>
+                      <div><span className="font-bold text-pink-700">Julia:</span> Well, I can draw and <span className={`inline-block px-1.5 py-0.5 rounded-md font-bold mx-0.5 ${currentQuestion.questionNumber === 1 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(1) _______</span> quite well. I can also <span className={`inline-block px-1.5 py-0.5 rounded-md font-bold mx-0.5 ${currentQuestion.questionNumber === 2 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(2) _______</span>, but I don't swim so well.</div>
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200">
+                      <span className="text-[11px] font-bold text-purple-600 block mb-1">Đoạn 2: Dan & Jane (Câu 3 - 4)</span>
+                      <div><span className="font-bold text-blue-700">Dan:</span> Can you play any <span className={`inline-block px-1.5 py-0.5 rounded-md font-bold mx-0.5 ${currentQuestion.questionNumber === 3 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(3) _______</span>, Jane? — <span className="font-bold text-pink-700">Jane:</span> Yes, of course.</div>
+                      <div><span className="font-bold text-blue-700">Dan:</span> What sports can you play? — <span className="font-bold text-pink-700">Jane:</span> A lot. Football, <span className={`inline-block px-1.5 py-0.5 rounded-md font-bold mx-0.5 ${currentQuestion.questionNumber === 4 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(4) _______</span>, volleyball, and so on.</div>
+                    </div>
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200">
+                      <span className="text-[11px] font-bold text-purple-600 block mb-1">Đoạn 3: Tiếng ồn của trẻ con (Câu 5 - 6)</span>
+                      <div>You can play the <span className={`inline-block px-1.5 py-0.5 rounded-md font-bold mx-0.5 ${currentQuestion.questionNumber === 5 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(5) _______</span> or read some fairy tales. Then they will <span className={`inline-block px-1.5 py-0.5 rounded-md font-bold mx-0.5 ${currentQuestion.questionNumber === 6 ? 'bg-amber-200 text-amber-950 ring-2 ring-amber-400 font-black' : 'bg-slate-100'}`}>(6) _______</span> to you and don't make noise any more.</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 5 - Bảng nối hội thoại Cột A & B (Câu 11 - 15) */}
+              {currentExam.id === 'midterm1-exam5' && currentQuestion.questionNumber >= 11 && currentQuestion.questionNumber <= 15 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50 via-orange-50/50 to-white border-2 border-amber-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-amber-200/60">
+                    <span className="text-xs font-black text-amber-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🔗</span>
+                      <span>Bảng nối hội thoại Cột A & Cột B (Đề 5 - Bài III)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                      Đang làm câu số {currentQuestion.questionNumber - 10}
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+                      <div className="font-black text-amber-900 pb-1 border-b border-slate-100 text-xs">CỘT A (Câu 1 - 5)</div>
+                      {[
+                        { num: 1, text: 'Nice to see you again.' },
+                        { num: 2, text: 'Can he play the piano?' },
+                        { num: 3, text: 'Where is Peter from?' },
+                        { num: 4, text: 'What day is it today?' },
+                        { num: 5, text: "When is your mother's birthday party?" }
+                      ].map(row => (
+                        <div key={row.num} className={`p-2 rounded-xl flex items-center gap-2 ${currentQuestion.questionNumber - 10 === row.num ? 'bg-amber-100 text-amber-950 font-black ring-2 ring-amber-300' : 'text-slate-700'}`}>
+                          <span className="w-5 h-5 rounded-md bg-amber-600 text-white font-bold flex items-center justify-center text-xs shrink-0">{row.num}</span>
+                          <span>{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1.5">
+                      <div className="font-black text-emerald-900 pb-1 border-b border-slate-100 text-xs">CỘT B (Đáp án a - e)</div>
+                      {[
+                        { char: 'a', text: 'He is from Canada.' },
+                        { char: 'b', text: 'Next Monday.' },
+                        { char: 'c', text: 'Nice to see you again, too.' },
+                        { char: 'd', text: 'It is Wednesday.' },
+                        { char: 'e', text: 'No, he can’t.' }
+                      ].map(row => (
+                        <div key={row.char} className="p-2 rounded-xl flex items-center gap-2 text-slate-700 bg-slate-50 border border-slate-200">
+                          <span className="w-5 h-5 rounded-md bg-emerald-600 text-white font-bold flex items-center justify-center text-xs shrink-0">{row.char}</span>
+                          <span>{row.text}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 4 - Bảng Lớp Học Quốc Tế của Rei (Câu 22 - 26) */}
+              {currentExam.id === 'midterm1-exam4' && currentQuestion.questionNumber >= 22 && currentQuestion.questionNumber <= 26 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-sky-50/50 to-white border-2 border-indigo-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-100">
+                    <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🏫</span>
+                      <span>Lớp học quốc tế của Rei (Bài đọc hiểu IV - Đề 4)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
+                      Câu hỏi đọc hiểu ({currentQuestion.questionNumber - 21}/5)
+                    </span>
+                  </div>
+
+                  {/* Class snapshot banner */}
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mb-3 text-xs">
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 22 || currentQuestion.questionNumber === 25
+                        ? 'bg-amber-100/90 border-amber-300 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">🇯🇵</span>
+                        <span className="font-black text-slate-900">Rei</span>
+                        <span className="text-[10px] bg-indigo-50 text-indigo-700 px-1.5 py-0.2 rounded font-bold">Bạn kể chuyện</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Quốc tịch: <span className="font-bold text-indigo-700">Japanese</span> (Japan)
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Nói được: <span className="font-bold text-indigo-700">Japanese & English</span>
+                      </div>
+                    </div>
+
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 24
+                        ? 'bg-amber-100/90 border-amber-300 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">🇺🇸</span>
+                        <span className="font-black text-slate-900">Jake & Keith</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Đến từ: <span className="font-bold text-blue-700">The USA (Nước Mỹ)</span>
+                      </div>
+                      <div className="text-[10px] text-slate-400">Không phải nước Anh (England)</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl border bg-white border-slate-200 text-slate-800 shadow-2xs">
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">🇬🇧</span>
+                        <span className="font-black text-slate-900">Linda</span>
+                        <span className="text-base ml-2">🇻🇳</span>
+                        <span className="font-black text-slate-900">Han</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Linda: <span className="font-bold text-indigo-700">England</span> · Han: <span className="font-bold text-emerald-700">Viet Nam</span>
+                      </div>
+                      <div className="text-[10px] text-slate-500">SeoAhn: 🇰🇷 Korea</div>
+                    </div>
+                  </div>
+
+                  {/* Highlights banner */}
+                  <div className="flex flex-wrap items-center justify-between gap-2 p-2.5 rounded-2xl bg-white border border-slate-200 text-xs">
+                    <div className={`flex items-center gap-2 ${currentQuestion.questionNumber === 23 ? 'font-black text-indigo-950 bg-indigo-50 px-2 py-1 rounded-xl' : 'text-slate-700'}`}>
+                      <span className="text-sm">🎒</span>
+                      <span>Sĩ số lớp: <strong className="text-indigo-600">20 học sinh</strong> (Twenty students)</span>
+                    </div>
+                    <div className={`flex items-center gap-2 ${currentQuestion.questionNumber === 26 ? 'font-black text-emerald-950 bg-emerald-50 px-2 py-1 rounded-xl' : 'text-slate-700'}`}>
+                      <span className="text-sm">🏸</span>
+                      <span>Giờ ra chơi: <strong className="text-emerald-700">Cầu lông & Trốn tìm</strong> (Badminton & hide-and-seek)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 5 - Sổ Tay Lịch Trình Tuần của Anna (Câu 21 - 25) */}
+              {currentExam.id === 'midterm1-exam5' && currentQuestion.questionNumber >= 21 && currentQuestion.questionNumber <= 25 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border-2 border-amber-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-amber-200/60">
+                    <span className="text-xs font-black text-amber-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>📔</span>
+                      <span>Nhật ký thời gian biểu của Anna (Đề 5 - Bài V)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                      Hôm nay: Thứ Tư, 7 tháng 10 🇺🇸
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 mb-2.5 text-xs">
+                    {/* Mon - Fri */}
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 22
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <span className="text-[10px] font-black uppercase text-amber-700 block mb-1">Thứ Hai - Thứ Sáu</span>
+                      <div className="font-extrabold text-slate-900 flex items-center gap-1.5 mb-1">
+                        <span>🎒</span>
+                        <span>Đi học ở trường</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium">Go to school (Mon to Fri)</span>
+                    </div>
+
+                    {/* Monday Afternoon */}
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 24
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <span className="text-[10px] font-black uppercase text-indigo-700 block mb-1">Chiều Thứ Hai</span>
+                      <div className="font-extrabold text-slate-900 flex items-center gap-1.5 mb-1">
+                        <span>🗣️</span>
+                        <span>CLB Tiếng Anh</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium">Go to the English club</span>
+                    </div>
+
+                    {/* Wednesday Afternoon */}
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 23
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <span className="text-[10px] font-black uppercase text-sky-700 block mb-1">Chiều Thứ Tư</span>
+                      <div className="font-extrabold text-slate-900 flex items-center gap-1.5 mb-1">
+                        <span>🏊‍♀️</span>
+                        <span>Đi bơi lội</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium">Go swimming</span>
+                    </div>
+
+                    {/* Weekend */}
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 25
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <span className="text-[10px] font-black uppercase text-rose-700 block mb-1">Thứ Bảy & Chủ Nhật</span>
+                      <div className="font-extrabold text-slate-900 flex items-center gap-1.5 mb-1">
+                        <span>👵👴</span>
+                        <span>Thăm ông bà</span>
+                      </div>
+                      <span className="text-[11px] text-slate-500 font-medium">Visit grandparents (Weekend)</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Đề 5 - Đối Thoại Hỏi & Đáp (Câu 26 - 30) */}
+              {currentExam.id === 'midterm1-exam5' && currentQuestion.questionNumber >= 26 && currentQuestion.questionNumber <= 30 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-teal-50 via-emerald-50 to-white border-2 border-emerald-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-emerald-200/60">
+                    <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>💬</span>
+                      <span>Thử thách ghép câu hỏi đối thoại (Đề 5 - Bài VI)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      Dạng bài: Cho câu trả lời ➔ Tìm câu hỏi
+                    </span>
+                  </div>
+
+                  <div className="p-3 bg-white rounded-2xl border border-emerald-200 shadow-2xs flex flex-col sm:flex-row items-center justify-between gap-3 text-xs sm:text-sm">
+                    <div className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-xl bg-blue-100 text-blue-700 font-black flex items-center justify-center shrink-0">👦</span>
+                      <div>
+                        <span className="text-[11px] text-blue-600 font-bold block">Bạn A hỏi:</span>
+                        <span className="font-black text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg inline-block border border-dashed border-slate-300">
+                          ❓ [Chọn câu hỏi chính xác bên dưới]
+                        </span>
+                      </div>
+                    </div>
+
+                    <span className="text-slate-400 font-black text-sm hidden sm:inline">➔</span>
+
+                    <div className="flex items-center gap-2">
+                      <span className="w-8 h-8 rounded-xl bg-emerald-100 text-emerald-700 font-black flex items-center justify-center shrink-0">👧</span>
+                      <div>
+                        <span className="text-[11px] text-emerald-700 font-bold block">Bạn B đã trả lời:</span>
+                        <span className="font-black text-emerald-950 bg-emerald-100/90 px-3 py-1 rounded-lg inline-block border border-emerald-300 shadow-2xs">
+                          "{currentQuestion.questionPrompt.match(/"([^"]+)"/)?.[1] || '...'}"
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Cuối Kì 1 - Đề 1: Ảnh Lớp Học Pedro (Câu 16 - 20) */}
+              {currentExam.id === 'term1-exam1' && currentQuestion.questionNumber >= 16 && currentQuestion.questionNumber <= 20 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-amber-50/90 via-orange-50/40 to-white border-2 border-amber-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-amber-200/60">
+                    <span className="text-xs font-black text-amber-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>📸</span>
+                      <span>Bức ảnh lớp học của bạn Pedro (Cuối Kì 1 - Đề 1)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-amber-800 bg-amber-100 px-2.5 py-0.5 rounded-full">
+                      Câu đọc hiểu ({currentQuestion.questionNumber - 15}/5)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2.5 text-xs">
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 16
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">👩‍🏫</span>
+                        <span className="font-black text-slate-900">Ms Anna</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        GVCN · Dạy: <strong className="text-amber-700">Lịch sử (History)</strong>
+                      </div>
+                      <div className="text-[10px] text-slate-400">Funny & kind</div>
+                    </div>
+
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 17
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">👦</span>
+                        <span className="font-black text-slate-900">Alberto</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Lớp trưởng (Monitor)
+                      </div>
+                      <div className="text-[10px] text-indigo-600 font-bold">Văn & Địa lý (Literature & Geo)</div>
+                    </div>
+
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 18 || currentQuestion.questionNumber === 19
+                        ? 'bg-amber-100 border-amber-400 ring-2 ring-amber-300 font-black text-amber-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">👦</span>
+                        <span className="font-black text-slate-900">Paulo</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Học sinh giỏi (Good student)
+                      </div>
+                      <div className="text-[10px] text-emerald-600 font-bold">Thích mọi môn · Giỏi Tiếng Anh & Pháp</div>
+                    </div>
+
+                    <div className={`p-2.5 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 19 || currentQuestion.questionNumber === 20
+                        ? 'bg-pink-100 border-pink-400 ring-2 ring-pink-300 font-black text-pink-950'
+                        : 'bg-white border-slate-200 text-slate-800'
+                    }`}>
+                      <div className="flex items-center gap-1.5 mb-1">
+                        <span className="text-base">👧</span>
+                        <span className="font-black text-slate-900">Lisa (Váy hồng)</span>
+                      </div>
+                      <div className="text-[11px] text-slate-600 font-medium">
+                        Bạn thân nhất (Best friend)
+                      </div>
+                      <div className="text-[10px] text-rose-600 font-bold">Khoa học & Tin học (Science & IT)</div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Cuối Kì 1 - Đề 2: Nghe Hội Thoại Sở Thích (Câu 1 - 8) */}
+              {currentExam.id === 'term1-exam2' && currentQuestion.questionNumber >= 1 && currentQuestion.questionNumber <= 8 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white border-2 border-emerald-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-emerald-200/60">
+                    <span className="text-xs font-black text-emerald-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🎧</span>
+                      <span>Hội thoại nghe về sở thích: Frank-Andrea & Jane-Tom (Đề 2 Cuối Kì 1)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-emerald-800 bg-emerald-100 px-2.5 py-0.5 rounded-full">
+                      Vị trí ({currentQuestion.questionNumber}/8)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-xs sm:text-sm">
+                    {/* Đoạn 1: Frank & Andrea */}
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                      <span className="text-[11px] font-black text-emerald-700 uppercase block mb-1">Đoạn 1: Frank & Andrea (Câu 1 - 4)</span>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-blue-700">Frank:</span> Can you tell me about your <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 1 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(1) hobby</span>?
+                      </div>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-pink-700">Andrea:</span> I'm painting a picture for my mum. I like playing the <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 2 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(2) guitar</span>. I don't like <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 3 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(3) skating</span>.
+                      </div>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-blue-700">Frank:</span> I <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 4 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(4) hope</span> your mum likes the picture.
+                      </div>
+                    </div>
+
+                    {/* Đoạn 2: Jane & Tom */}
+                    <div className="p-3 bg-white rounded-2xl border border-slate-200 shadow-2xs space-y-1">
+                      <span className="text-[11px] font-black text-indigo-700 uppercase block mb-1">Đoạn 2: Jane & Tom (Câu 5 - 8)</span>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-pink-700">Jane:</span> What <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 5 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(5) hobbies</span> do you have?
+                      </div>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-blue-700">Tom:</span> Basketball, surfing, skateboarding.
+                      </div>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-pink-700">Jane:</span> Are you good at <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 6 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(6) basketball</span>? Do you like playing <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 7 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(7) golf</span>?
+                      </div>
+                      <div className="text-slate-800 leading-relaxed">
+                        <span className="font-bold text-blue-700">Tom:</span> No, not really. I think it's <span className={`px-1.5 py-0.5 rounded font-bold ${currentQuestion.questionNumber === 8 ? 'bg-amber-200 text-amber-950 font-black ring-1 ring-amber-400' : 'bg-slate-100'}`}>(8) boring</span>.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Cuối Kì 1 - Đề 2: Thể Thao Nam & Rebecca (Câu 19 - 23) */}
+              {currentExam.id === 'term1-exam2' && currentQuestion.questionNumber >= 19 && currentQuestion.questionNumber <= 23 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-cyan-50 via-teal-50 to-white border-2 border-teal-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-teal-200/60">
+                    <span className="text-xs font-black text-teal-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🎾</span>
+                      <span>Hồ sơ thể thao: Nam & Rebecca (Đề 2 Cuối Kì 1)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-teal-800 bg-teal-100 px-2.5 py-0.5 rounded-full">
+                      Câu hỏi ({currentQuestion.questionNumber - 18}/5)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                    <div className={`p-3 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 19 || currentQuestion.questionNumber === 20 || currentQuestion.questionNumber === 21
+                        ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-300 font-medium'
+                        : 'bg-white border-slate-200'
+                    }`}>
+                      <div className="font-black text-slate-900 flex items-center gap-1.5 mb-1">
+                        <span>👦</span>
+                        <span>Bạn Nam:</span>
+                      </div>
+                      <ul className="space-y-1 text-slate-700">
+                        <li>• Môn yêu thích: <strong className="text-indigo-700">Quần vợt (Tennis 🎾)</strong></li>
+                        <li>• Không thích: Trò chơi máy tính vì <strong className="text-rose-600">nhàm chán (boring)</strong></li>
+                        <li>• Cuối tuần: Đọc sách, xem TV & đi phòng gym 🏋️</li>
+                        <li>• Chiều Chủ nhật: Ăn pizza 🍕 & xem phim cùng bạn bè</li>
+                      </ul>
+                    </div>
+
+                    <div className={`p-3 rounded-2xl border transition shadow-2xs ${
+                      currentQuestion.questionNumber === 22 || currentQuestion.questionNumber === 23
+                        ? 'bg-amber-50 border-amber-300 ring-2 ring-amber-300 font-medium'
+                        : 'bg-white border-slate-200'
+                    }`}>
+                      <div className="font-black text-slate-900 flex items-center gap-1.5 mb-1">
+                        <span>👧</span>
+                        <span>Bạn Rebecca:</span>
+                      </div>
+                      <ul className="space-y-1 text-slate-700">
+                        <li>• Chơi cực giỏi: <strong className="text-emerald-700">Bóng chuyền (Volleyball 🏐)</strong></li>
+                        <li>• Cũng thích đến phòng tập thể dục (gym) cùng Nam</li>
+                        <li>• Sở thích đặc biệt: <strong className="text-amber-700">Sưu tầm ảnh ca sĩ yêu thích 🎤</strong></li>
+                        <li>• Đã sưu tầm được: <strong>100 bức ảnh</strong></li>
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Cuối Kì 1 - Đề 3: Giờ Giải Lao - Break Time (Câu 16 - 20) */}
+              {currentExam.id === 'term1-exam3' && currentQuestion.questionNumber >= 16 && currentQuestion.questionNumber <= 20 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-indigo-50/90 via-sky-50/50 to-white border-2 border-indigo-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-indigo-100">
+                    <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>⏰</span>
+                      <span>Bản đồ hoạt động: Giờ giải lao (Break Time - Đề 3)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-indigo-700 bg-indigo-100 px-2.5 py-0.5 rounded-full">
+                      Câu đọc hiểu ({currentQuestion.questionNumber - 15}/5)
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mb-2 text-xs">
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-black uppercase text-pink-600 block mb-1">Vẽ tranh & Đồ giấy</span>
+                      <div className="text-slate-800 font-medium">Trang & Nhung: <strong>Vẽ lọ hoa 🏺</strong></div>
+                      <div className="text-slate-800 font-medium mt-1">Mai, Hoàng, Nam: <strong>Máy bay, nhà & thuyền giấy ✈️🏠⛵</strong></div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-black uppercase text-blue-600 block mb-1">Rối, Sách & Chính tả</span>
+                      <div className="text-slate-800 font-medium">Nga: <strong>Làm con rối 🎭</strong></div>
+                      <div className="text-slate-800 font-medium mt-1">Ninh: <strong>Đọc sách 📖</strong> · Hoa: <strong>Viết chính tả ✍️</strong></div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                      <span className="text-[10px] font-black uppercase text-emerald-600 block mb-1">Video thú cưng & Sân trường</span>
+                      <div className="text-slate-800 font-medium">Hân: <strong>Xem video hài về thú cưng 🐶🐱</strong></div>
+                      <div className="text-slate-800 font-medium mt-1">Sân trường: <strong>Chơi cầu lông 🏸</strong></div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* CONTEXTUAL BOARD: Cuối Kì 1 - Đề 5: Trường Quốc Tế Hà Nội (Câu 23 - 27) */}
+              {currentExam.id === 'term1-exam5' && currentQuestion.questionNumber >= 23 && currentQuestion.questionNumber <= 27 && (
+                <div className="mb-5 p-4 sm:p-5 rounded-3xl bg-gradient-to-br from-blue-50 via-teal-50/50 to-white border-2 border-blue-200 shadow-xs">
+                  <div className="flex items-center justify-between mb-3 pb-2 border-b border-blue-200/60">
+                    <span className="text-xs font-black text-blue-950 flex items-center gap-1.5 uppercase tracking-wide">
+                      <span>🏫</span>
+                      <span>Trường Quốc tế Hà Nội: Julia & các bạn (Đề 5 Cuối Kì 1)</span>
+                    </span>
+                    <span className="text-[11px] font-bold text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded-full">
+                      Địa chỉ: 53 Nguyễn Du, Hà Nội · Lớp 4E
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-2 text-xs">
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                      <div className="font-black text-slate-900 flex items-center gap-1 mb-1">
+                        <span>🇬🇧</span> <span>Julia</span>
+                      </div>
+                      <div className="text-slate-600 text-[11px]">Đến từ nước Anh</div>
+                      <div className="text-blue-700 font-bold text-[10px]">Lớp 4E · Rất nhiều bạn</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                      <div className="font-black text-slate-900 flex items-center gap-1 mb-1">
+                        <span>🇻🇳</span> <span>Nhung</span>
+                      </div>
+                      <div className="text-slate-600 text-[11px]">Người Việt Nam</div>
+                      <div className="text-emerald-700 font-bold text-[10px]">Vẽ tranh rất giỏi 🎨</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl bg-white border border-slate-200 shadow-2xs">
+                      <div className="font-black text-slate-900 flex items-center gap-1 mb-1">
+                        <span>🇬🇧</span> <span>Harry</span>
+                      </div>
+                      <div className="text-slate-600 text-[11px]">Người Anh (English)</div>
+                      <div className="text-indigo-700 font-bold text-[10px]">Bơi lội 🏊 & Chơi ghi-ta 🎸</div>
+                    </div>
+
+                    <div className="p-2.5 rounded-2xl border border-slate-200 shadow-2xs">
+                      <div className="font-black text-slate-900 flex items-center gap-1 mb-1">
+                        <span>🇯🇵</span> <span>Maori</span>
+                      </div>
+                      <div className="text-slate-600 text-[11px]">Bạn gái Nhật Bản</div>
+                      <div className="text-pink-700 font-bold text-[10px]">Khiêu vũ 💃 & Đá bóng ⚽</div>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1052,11 +2289,89 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
             {/* INTERACTIVE QUESTION BODY BY TYPE */}
             {/* ======================================================== */}
 
+            {/* 1.5. Interactive Letter Tile Builder for Unscramble Word */}
+            {currentQuestion.type === 'unscramble_word' && currentQuestion.wordToUnscramble && (
+              <div className="mb-6 space-y-4 p-4.5 rounded-3xl bg-indigo-50/60 border-2 border-indigo-200">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                    <span>🔤</span>
+                    <span>Bấm từng chữ cái để ghép từ (hoặc chọn đáp án trắc nghiệm):</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleResetUnscramble}
+                    className="text-xs text-indigo-600 hover:text-indigo-900 font-bold flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3 h-3" />
+                    <span>Ghép lại từ đầu</span>
+                  </button>
+                </div>
+
+                {/* Target Word Assemble Slots */}
+                <div className="p-3.5 rounded-2xl bg-white border-2 border-dashed border-indigo-300 min-h-16 flex items-center justify-center gap-2 flex-wrap shadow-2xs">
+                  {unscrambleSelectedLetters.length === 0 ? (
+                    <span className="text-xs text-slate-400 italic">
+                      👉 Bấm các chữ cái bên dưới để xếp vào đây...
+                    </span>
+                  ) : (
+                    unscrambleSelectedLetters.map((letter, lIdx) => (
+                      <button
+                        key={lIdx}
+                        type="button"
+                        onClick={() => handleRemoveUnscrambleLetter(letter, lIdx)}
+                        className="w-10 h-11 rounded-xl bg-indigo-600 hover:bg-rose-600 text-white font-black text-lg flex items-center justify-center shadow-xs transition group cursor-pointer"
+                        title="Bấm để gỡ chữ này"
+                      >
+                        <span className="group-hover:hidden">{letter}</span>
+                        <span className="hidden group-hover:inline text-xs">✕</span>
+                      </button>
+                    ))
+                  )}
+                </div>
+
+                {/* Available Shuffled Letters */}
+                <div>
+                  <div className="text-[11px] font-bold text-slate-500 mb-2">
+                    Các chữ cái khả dụng ({unscrambleAvailableLetters.length}):
+                  </div>
+                  <div className="flex flex-wrap gap-2 justify-center sm:justify-start">
+                    {unscrambleAvailableLetters.map((letter, aIdx) => (
+                      <button
+                        key={aIdx}
+                        type="button"
+                        onClick={() => handlePickUnscrambleLetter(letter, aIdx)}
+                        className="w-10 h-11 rounded-xl bg-white hover:bg-indigo-100 border-2 border-indigo-300 hover:border-indigo-500 font-black text-indigo-800 text-lg flex items-center justify-center shadow-xs transition active:scale-90 cursor-pointer"
+                      >
+                        {letter}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Listen to constructed word */}
+                {userAnswers[currentQuestion.id] && (
+                  <div className="flex items-center gap-2 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handlePlayAudio(userAnswers[currentQuestion.id], 0.88)}
+                      className="px-3 py-1.5 rounded-xl bg-white hover:bg-slate-100 text-indigo-700 text-xs font-bold flex items-center gap-1 border border-indigo-200 shadow-2xs"
+                    >
+                      <Volume2 className="w-3.5 h-3.5" />
+                      <span>Nghe phát âm từ: "{userAnswers[currentQuestion.id]}"</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* 1. Multiple Choice / Odd One Out / Pronunciation / Reading / Error Correction */}
             {currentQuestion.options && currentQuestion.type !== 'reorder' && (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                 {currentQuestion.options.map((option, idx) => {
-                  const isSelected = userAnswers[currentQuestion.id] === option;
+                  const isSelected =
+                    userAnswers[currentQuestion.id] === option ||
+                    (currentQuestion.type === 'unscramble_word' &&
+                      userAnswers[currentQuestion.id]?.toLowerCase() === option.toLowerCase());
                   const isChecked = checkedQuestions[currentQuestion.id];
                   const isCorrect =
                     option.trim().toLowerCase() ===
@@ -1095,17 +2410,17 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
                         <span className="text-sm font-semibold truncate sm:whitespace-normal">{option}</span>
                       </button>
 
-                      {/* Listen button for pronunciation and odd one out */}
-                      {(currentQuestion.type === 'pronunciation' ||
-                        currentQuestion.type === 'odd_one_out') && (
+                      {/* Listen button for option pronunciation */}
+                      {option && !option.startsWith('Sửa ') && !option.startsWith('Tranh ') && !option.startsWith('Hình ') && (
                         <button
                           type="button"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             const cleanText = option.split('(')[0].replace(/[/_\\*]/g, '').trim();
-                            handlePlayAudio(cleanText, 0.88);
+                            if (cleanText) handlePlayAudio(cleanText, 0.88);
                           }}
-                          className="p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-slate-700 transition shrink-0 border border-transparent hover:border-slate-200"
-                          title="Nghe phát âm từ này"
+                          className="p-1.5 hover:bg-white rounded-lg text-slate-400 hover:text-indigo-600 transition shrink-0 border border-transparent hover:border-slate-200"
+                          title="Nghe phát âm phương án này"
                         >
                           <Volume2 className="w-4 h-4" />
                         </button>
@@ -1243,17 +2558,36 @@ export const ExamStudio: React.FC<ExamStudioProps> = ({
                       )}
                     </div>
 
-                    <div className="text-xs text-slate-800 font-medium mb-1">
-                      <span className="font-bold text-slate-900">Đáp án đúng: </span>
-                      <span className="text-indigo-700 font-black">
-                        {currentQuestion.correctAnswer}
+                    <div className="text-xs text-slate-800 font-medium mb-2 pb-2 border-b border-slate-200/60 flex items-center justify-between">
+                      <div>
+                        <span className="font-bold text-slate-900">🎯 Đáp án chính xác: </span>
+                        <span className="text-indigo-700 font-black text-sm">
+                          {currentQuestion.correctAnswer}
+                        </span>
+                      </div>
+                      <span className="text-[10px] bg-indigo-100 text-indigo-800 font-bold px-2 py-0.5 rounded-full">
+                        Loigiaihay.com
                       </span>
                     </div>
 
-                    <div className="text-xs text-slate-700 leading-relaxed">
+                    {currentQuestion.grammarFocus && (
+                      <div className="text-xs text-amber-950 bg-amber-50 p-2.5 rounded-xl border border-amber-200 mb-2 font-medium">
+                        <span className="font-bold text-amber-800">🧠 Kiến thức trọng tâm: </span>
+                        <span>{currentQuestion.grammarFocus}</span>
+                      </div>
+                    )}
+
+                    <div className="text-xs text-slate-700 leading-relaxed mb-2">
                       <span className="font-bold text-slate-900">💡 Giải thích chi tiết: </span>
                       {currentQuestion.explanation}
                     </div>
+
+                    {currentQuestion.vietnameseTranslation && (
+                      <div className="text-xs text-emerald-950 bg-emerald-50/90 p-2.5 rounded-xl border border-emerald-200">
+                        <span className="font-bold text-emerald-800">📖 Dịch nghĩa tiếng Việt: </span>
+                        <span>{currentQuestion.vietnameseTranslation}</span>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
