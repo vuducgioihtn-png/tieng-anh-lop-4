@@ -203,60 +203,26 @@ export interface VoicePersona {
 
 export const PRESET_VOICE_PERSONAS: VoicePersona[] = [
   {
-    id: 'leda_resonant',
-    name: 'Cô Leda (Vang Sáng & Ngân Vang · Mặc Định ⭐)',
-    description: 'Chất giọng nữ vang ngân, ấm áp, cao độ bay bổng (Pitch ~1.18x) giúp học sinh nghe rõ từng nguyên âm, hào hứng lặp lại.',
-    accent: 'Resonant Crystal Clear',
-    tag: 'Mặc định tối ưu nhất cho học sinh',
-    recommendedPitch: 1.18,
+    id: 'google_us_english_gb',
+    name: 'Google US English (Anh - Anh)',
+    description: 'Giọng đọc Google US English chất lượng cao, ngữ âm chuẩn mực, phát âm tròn vành rõ chữ, trong sáng và cuốn hút nhất cho học sinh.',
+    accent: 'Google US English • en-US',
+    tag: 'Chất lượng cao',
+    recommendedPitch: 1.15,
     recommendedRate: 0.88
-  },
-  {
-    id: 'sonia_british',
-    name: 'Cô Sonia (Chuẩn Anh - Anh Macmillan SGK 🇬🇧)',
-    description: 'Ngữ điệu Anh - Anh (British RP) chuẩn chỉnh 100% theo sách giáo khoa Global Success của Macmillan / Bộ GD&ĐT.',
-    accent: 'British (Anh - Anh chuẩn)',
-    tag: 'Chuẩn SGK Tiếng Anh 4',
-    recommendedPitch: 1.12,
-    recommendedRate: 0.88
-  },
-  {
-    id: 'samantha_clear',
-    name: 'Cô Samantha (Trong Trẻo Tinh Khiết)',
-    description: 'Phát âm rành mạch từng phụ âm cuối, cực kỳ thích hợp luyện Phonics và nghe chép chính tả.',
-    accent: 'Clear Articulation',
-    tag: 'Rõ từng âm đuôi',
-    recommendedPitch: 1.12,
-    recommendedRate: 0.85
-  },
-  {
-    id: 'aria_studio',
-    name: 'Cô Aria / Jenny (Phòng Thu Bản Xứ)',
-    description: 'Ngữ điệu tự nhiên như người bản xứ giảng dạy tại các trường quốc tế.',
-    accent: 'Natural Neural',
-    tag: 'Chuẩn quốc tế',
-    recommendedPitch: 1.08,
-    recommendedRate: 0.90
   }
 ];
 
 let selectedVoiceURI: string = '';
-let currentCustomPitch: number = 1.18; // Default Leda Resonant Pitch
+let currentCustomPitch: number = 1.15; // Optimal pitch for Google US English clarity
 
 export function getActiveVoicePersona(): VoicePersona {
-  if (typeof window !== 'undefined') {
-    const savedId = localStorage.getItem('ta4_voice_persona');
-    if (savedId) {
-      const found = PRESET_VOICE_PERSONAS.find(p => p.id === savedId);
-      if (found) return found;
-    }
-  }
-  return PRESET_VOICE_PERSONAS[0]; // Cô Leda default
+  return PRESET_VOICE_PERSONAS[0];
 }
 
-export function setActiveVoicePersona(id: string) {
+export function setActiveVoicePersona(_id: string) {
   if (typeof window !== 'undefined') {
-    localStorage.setItem('ta4_voice_persona', id);
+    localStorage.setItem('ta4_voice_persona', 'google_us_english_gb');
   }
 }
 
@@ -287,97 +253,69 @@ export function getAllSystemVoices(): SpeechSynthesisVoice[] {
   return window.speechSynthesis.getVoices();
 }
 
+/**
+ * Filter solely Google US English high-quality voice, discarding all other voices as requested
+ */
 export function getEnglishFemaleVoices(): SpeechSynthesisVoice[] {
   const all = getAllSystemVoices();
-  const english = all.filter(v => v.lang.startsWith('en'));
-  
-  const maleNames = ['david', 'george', 'mark', 'james', 'richard', 'guy', 'male', 'daniel', 'oliver', 'rishi'];
-  
-  // Prioritize female-like voices
-  const female = english.filter(v => {
-    const nameLower = v.name.toLowerCase();
-    const hasFemaleFlag = nameLower.includes('female') ||
-      nameLower.includes('samantha') ||
-      nameLower.includes('zira') ||
-      nameLower.includes('jenny') ||
-      nameLower.includes('aria') ||
-      nameLower.includes('sonia') ||
-      nameLower.includes('victoria') ||
-      nameLower.includes('karen') ||
-      nameLower.includes('moira') ||
-      nameLower.includes('fiona') ||
-      nameLower.includes('google us english') ||
-      nameLower.includes('google uk english female') ||
-      nameLower.includes('natural') ||
-      nameLower.includes('wavenet') ||
-      nameLower.includes('neural');
-    
-    const isMale = maleNames.some(m => nameLower.includes(m));
-    return hasFemaleFlag || !isMale;
-  });
+  if (all.length === 0) return [];
 
-  return female.length > 0 ? female : english;
+  // Filter exclusively Google US English
+  const googleUS = all.filter(v =>
+    v.name.toLowerCase().includes('google us english') ||
+    (v.name.toLowerCase().includes('google') && v.lang === 'en-US')
+  );
+
+  if (googleUS.length > 0) return googleUS;
+
+  // Fallback to any Google English voice
+  const googleAny = all.filter(v =>
+    v.name.toLowerCase().includes('google') && v.lang.startsWith('en')
+  );
+  if (googleAny.length > 0) return googleAny;
+
+  // Fallback if system has no Google voice
+  const enUS = all.filter(v => v.lang === 'en-US');
+  if (enUS.length > 0) return enUS;
+
+  return all.filter(v => v.lang.startsWith('en'));
 }
 
-function resolveActiveVoice(): SpeechSynthesisVoice | null {
+export function resolveActiveVoice(): SpeechSynthesisVoice | null {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return null;
   const voices = window.speechSynthesis.getVoices();
   if (!voices || voices.length === 0) return null;
 
-  // 1. Check user explicit choice from localStorage
-  const savedURI = selectedVoiceURI || (typeof window !== 'undefined' ? localStorage.getItem('ta4_voice_uri') : '');
-  if (savedURI) {
-    const found = voices.find(v => v.voiceURI === savedURI || v.name === savedURI);
+  // 1. Check user explicit choice if it matches Google
+  if (selectedVoiceURI) {
+    const found = voices.find(v => v.voiceURI === selectedVoiceURI || v.name === selectedVoiceURI);
     if (found) return found;
   }
 
-  const activePersona = getActiveVoicePersona();
+  // 2. Exclusively prioritize Google US English
+  const googleUSEnglish = voices.find(v =>
+    v.name.toLowerCase().includes('google us english') ||
+    (v.name.toLowerCase().includes('google') && v.lang === 'en-US')
+  );
+  if (googleUSEnglish) return googleUSEnglish;
 
-  // 2. Persona: Cô Leda (Vang Sáng & Ngân Vang Chuẩn Trực Quan)
-  if (activePersona.id === 'leda_resonant') {
-    const ledaPreferred = [
-      'Google US English',        // Vang ngân, âm cao trong sáng
-      'Samantha',                 // Apple Crystal Clear Female
-      'Google UK English Female', // UK high-clarity
-      'Jenny',                    // Neural Studio
-      'Aria',                     // Neural Studio
-      'Victoria',                 // macOS bright
-      'Zira',                     // Windows bright female
-      'Sonia',
-      'Libby'
-    ];
-    for (const name of ledaPreferred) {
-      const found = voices.find(v => v.lang.startsWith('en') && v.name.toLowerCase().includes(name.toLowerCase()));
-      if (found) return found;
-    }
-  } else if (activePersona.id === 'sonia_british') {
-    const britishPreferred = [
-      'Google UK English Female',
-      'UK English Female',
-      'en-GB',
-      'Sonia',
-      'Libby',
-      'Hazel',
-      'Serena',
-      'Victoria'
-    ];
-    for (const name of britishPreferred) {
-      const found = voices.find(v => (v.lang.includes('GB') || v.lang.startsWith('en')) && v.name.toLowerCase().includes(name.toLowerCase()));
-      if (found) return found;
-    }
-  }
+  // 3. Any Google English voice
+  const googleEnglish = voices.find(v =>
+    v.name.toLowerCase().includes('google') && v.lang.startsWith('en')
+  );
+  if (googleEnglish) return googleEnglish;
 
-  // 3. Fallback: Any english non-male voice
-  const femaleFallback = getEnglishFemaleVoices();
-  if (femaleFallback.length > 0) return femaleFallback[0];
+  // 4. Default en-US or English
+  const usVoice = voices.find(v => v.lang === 'en-US');
+  if (usVoice) return usVoice;
 
   return voices.find(v => v.lang.startsWith('en')) || voices[0] || null;
 }
 
 /**
- * Text-to-Speech with British English (Anh - Anh) Priority & Resonant Audio Presence
+ * Text-to-Speech locked to Google US English high quality voice
  */
-export function speakWord(text: string, rate: number = 0.9): Promise<void> {
+export function speakWord(text: string, rate: number = 0.88): Promise<void> {
   return new Promise((resolve) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       resolve();
@@ -388,22 +326,19 @@ export function speakWord(text: string, rate: number = 0.9): Promise<void> {
 
     const cleanText = text.replace(/[/_\\*]/g, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
-    // Standard British English (en-GB) matching Vietnam MOET Macmillan textbook curriculum
-    utterance.lang = 'en-GB';
-    utterance.rate = rate;
-    
-    // Use resonant pitch (around 1.12 - 1.16 for bright, pleasant vocal clarity)
-    const pitch = getGlobalPitch();
-    utterance.pitch = pitch;
-    utterance.volume = 1.0; // Full resonant projection
 
     const voice = resolveActiveVoice();
     if (voice) {
       utterance.voice = voice;
-      if (voice.lang) {
-        utterance.lang = voice.lang;
-      }
+      utterance.lang = voice.lang || 'en-US';
+    } else {
+      utterance.lang = 'en-US';
     }
+
+    utterance.rate = rate;
+    const pitch = getGlobalPitch();
+    utterance.pitch = pitch;
+    utterance.volume = 1.0;
 
     utterance.onend = () => resolve();
     utterance.onerror = () => resolve();

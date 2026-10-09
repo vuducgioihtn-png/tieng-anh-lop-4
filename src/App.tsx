@@ -800,12 +800,12 @@ export default function App() {
                   sound.playClick();
                   setShowVoiceStudio(true);
                 }}
-                title="Giọng Nữ Cô Leda: Vang ngân, ấm áp (Mặc định). Bấm để tùy chỉnh âm sắc."
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-700 hover:text-indigo-700 hover:bg-white transition-all"
+                title="Giọng Google US English (Anh - Anh) chất lượng cao. Bấm để tinh chỉnh độ vang và tốc độ."
+                className="flex items-center gap-1.5 px-2.5 py-1 rounded-xl text-xs font-bold text-slate-700 hover:text-rose-700 hover:bg-white transition-all"
               >
-                <span>👩‍🏫</span>
-                <span className="hidden sm:inline">Cô Leda</span>
-                <Volume2 className="w-3.5 h-3.5 text-indigo-600" />
+                <span>🎙️</span>
+                <span className="hidden sm:inline">Google US English (Anh - Anh)</span>
+                <Volume2 className="w-3.5 h-3.5 text-rose-600" />
               </button>
 
               <div className="w-px h-4 bg-slate-200 mx-0.5" />
@@ -813,12 +813,12 @@ export default function App() {
               <button
                 onClick={() => {
                   sound.playClick();
-                  setSpeechRate(prev => (prev === 0.9 ? 0.7 : 0.9));
+                  setSpeechRate(prev => (prev === 0.88 ? 0.72 : 0.88));
                 }}
                 title="Chỉnh tốc độ giọng đọc"
                 className="px-2 py-1 rounded-xl text-[11px] font-bold text-slate-600 hover:text-slate-900 hover:bg-white transition-all font-mono"
               >
-                {speechRate < 0.9 ? '0.7x' : '1.0x'}
+                {speechRate < 0.8 ? '0.7x' : '0.9x'}
               </button>
             </div>
 

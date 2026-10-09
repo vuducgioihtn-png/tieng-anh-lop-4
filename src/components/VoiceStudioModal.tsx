@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Volume2, Sparkles, Check, Sliders, Music, Zap, RefreshCw, X } from 'lucide-react';
+import { Volume2, Sparkles, Check, Sliders, Music, Zap, X } from 'lucide-react';
 import {
   PRESET_VOICE_PERSONAS,
   VoicePersona,
@@ -28,8 +28,7 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
 }) => {
   const [systemVoices, setSystemVoices] = useState<SpeechSynthesisVoice[]>([]);
   const [selectedURI, setLocalURI] = useState<string>('');
-  const [pitch, setLocalPitch] = useState<number>(1.18);
-  const [activePersonaId, setActivePersonaId] = useState<string>('leda_resonant');
+  const [pitch, setLocalPitch] = useState<number>(1.15);
   const [testingText, setTestingText] = useState<string>("Hello! I'm Lucy. Where are you from? I'm from Britain.");
   const [isSpeakingTest, setIsSpeakingTest] = useState<boolean>(false);
 
@@ -39,17 +38,33 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
     const voices = getEnglishFemaleVoices();
     setSystemVoices(voices);
 
-    const savedURI = localStorage.getItem('ta4_voice_uri') || '';
-    setLocalURI(savedURI);
+    // Auto find Google US English
+    const googleVoice = voices.find(v =>
+      v.name.toLowerCase().includes('google us english') ||
+      (v.name.toLowerCase().includes('google') && v.lang === 'en-US')
+    ) || voices[0];
+
+    if (googleVoice) {
+      setLocalURI(googleVoice.voiceURI);
+      setSelectedVoiceURI(googleVoice.voiceURI);
+    }
 
     const currentP = getGlobalPitch();
     setLocalPitch(currentP);
 
-    const active = getActiveVoicePersona();
-    setActivePersonaId(active.id);
+    setActiveVoicePersona('google_us_english_gb');
 
     const handleVoicesChanged = () => {
-      setSystemVoices(getEnglishFemaleVoices());
+      const updated = getEnglishFemaleVoices();
+      setSystemVoices(updated);
+      const matched = updated.find(v =>
+        v.name.toLowerCase().includes('google us english') ||
+        (v.name.toLowerCase().includes('google') && v.lang === 'en-US')
+      ) || updated[0];
+      if (matched) {
+        setLocalURI(matched.voiceURI);
+        setSelectedVoiceURI(matched.voiceURI);
+      }
     };
 
     if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
@@ -58,42 +73,6 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
   }, [isOpen]);
 
   if (!isOpen) return null;
-
-  const handleApplyPersona = async (persona: VoicePersona) => {
-    sound.playClick();
-    setActivePersonaId(persona.id);
-    setActiveVoicePersona(persona.id);
-    setLocalPitch(persona.recommendedPitch);
-    setGlobalPitch(persona.recommendedPitch);
-    onUpdateSpeechRate(persona.recommendedRate);
-
-    // Find best match in system voices
-    let matchedVoice: SpeechSynthesisVoice | undefined;
-    if (persona.id === 'leda_resonant') {
-      matchedVoice = systemVoices.find(v => v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Jenny') || v.name.includes('Zira'));
-    } else if (persona.id === 'samantha_clear') {
-      matchedVoice = systemVoices.find(v => v.name.includes('Samantha') || v.name.includes('Victoria'));
-    } else if (persona.id === 'aria_studio') {
-      matchedVoice = systemVoices.find(v => v.name.includes('Aria') || v.name.includes('Jenny') || v.name.includes('Natural'));
-    } else if (persona.id === 'sonia_british') {
-      matchedVoice = systemVoices.find(v => v.lang.includes('GB') || v.name.includes('UK') || v.name.includes('Sonia'));
-    }
-
-    if (matchedVoice) {
-      setLocalURI(matchedVoice.voiceURI);
-      setSelectedVoiceURI(matchedVoice.voiceURI);
-    }
-
-    // Play test audio immediately with this persona
-    await playPreview();
-  };
-
-  const handleSelectSystemVoice = async (uri: string) => {
-    sound.playClick();
-    setLocalURI(uri);
-    setSelectedVoiceURI(uri);
-    await playPreview();
-  };
 
   const handlePitchChange = (newPitch: number) => {
     setLocalPitch(newPitch);
@@ -114,15 +93,15 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
         <div className="flex items-start justify-between pb-4 border-b border-slate-100">
           <div>
             <div className="flex items-center gap-2">
-              <span className="p-2 rounded-xl bg-pink-100 text-pink-700">
+              <span className="p-2 rounded-xl bg-rose-100 text-rose-700">
                 <Music className="w-5 h-5" />
               </span>
               <div>
                 <h3 className="text-xl font-extrabold text-slate-900">
-                  Phòng Chọn Giọng Nữ Chuẩn Anh - Anh & Vang Sáng (British RP Studio)
+                  Cài Đặt Giọng Đọc Google US English (Anh - Anh)
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Tùy chỉnh chất giọng chuẩn sách giáo khoa Macmillan Tiếng Anh 4 (Bộ GD&ĐT), ngân vang và rành mạch.
+                  Đã khóa duy nhất giọng Google US English chất lượng cao cho toàn bộ ứng dụng Tiếng Anh 4.
                 </p>
               </div>
             </div>
@@ -139,59 +118,51 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
           </button>
         </div>
 
-        {/* 4 Curated Resonant Personas */}
+        {/* Exclusive Selected Voice Card matching user image */}
         <div>
-          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center justify-between">
-            <span>1. Chọn phong cách giọng đọc tối ưu:</span>
-            <span className="text-pink-600 font-semibold text-[11px]">Đã tinh chỉnh độ vang tự nhiên</span>
+          <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-between">
+            <span>1. Giọng phát âm kích hoạt:</span>
+            <span className="text-rose-600 font-bold text-[11px] flex items-center gap-1">
+              <Sparkles className="w-3.5 h-3.5" /> Duy nhất 1 giọng chuẩn cao cấp
+            </span>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {PRESET_VOICE_PERSONAS.map(persona => {
-              const isSelected = activePersonaId === persona.id;
-              return (
-                <div
-                  key={persona.id}
-                  onClick={() => handleApplyPersona(persona)}
-                  className={`p-4 rounded-2xl border-2 transition-all cursor-pointer flex flex-col justify-between hover:shadow-md ${
-                    isSelected
-                      ? 'border-pink-500 bg-pink-50/60 shadow ring-2 ring-pink-200'
-                      : 'border-slate-200 bg-slate-50/50 hover:border-pink-300 hover:bg-white'
-                  }`}
-                >
-                  <div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="text-sm font-extrabold text-slate-900">
-                        {persona.name}
-                      </span>
-                      {isSelected && (
-                        <span className="w-5 h-5 rounded-full bg-pink-600 text-white flex items-center justify-center text-xs">
-                          <Check className="w-3 h-3" />
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-1.5 mt-1 text-[11px] font-semibold text-pink-700">
-                      <span className="bg-pink-100 px-2 py-0.5 rounded-md">
-                        {persona.accent}
-                      </span>
-                      <span className="text-slate-400">·</span>
-                      <span className="text-slate-500 font-normal">{persona.tag}</span>
-                    </div>
-
-                    <p className="text-xs text-slate-600 mt-2 leading-relaxed">
-                      {persona.description}
-                    </p>
-                  </div>
-
-                  <div className="mt-3 pt-2 border-t border-slate-200/60 flex items-center justify-between text-xs font-bold text-pink-600">
-                    <span>Bấm để nghe thử</span>
-                    <Volume2 className="w-4 h-4" />
-                  </div>
+          {/* Card exactly styled as the user's reference */}
+          <div
+            onClick={() => playPreview()}
+            className="w-full px-5 py-4 rounded-2xl border-2 border-rose-400 bg-rose-50/70 shadow-xs flex items-center justify-between cursor-pointer hover:bg-rose-100/60 transition-all select-none group ring-2 ring-rose-200/50"
+          >
+            <div className="flex items-center gap-4">
+              <span className="text-rose-900 font-black text-base sm:text-lg tracking-wide shrink-0">
+                GB
+              </span>
+              <div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="font-bold text-rose-950 text-sm sm:text-base tracking-tight">
+                    Google US English (Anh - Anh)
+                  </span>
+                  <span className="text-[11px] font-black text-rose-800 bg-rose-200/80 px-1.5 py-0.2 rounded">
+                    GB
+                  </span>
                 </div>
-              );
-            })}
+                <div className="text-xs font-medium text-slate-600 group-hover:text-rose-800 transition-colors mt-0.5">
+                  Google US English • en-US
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="text-xs font-bold text-rose-600 hidden sm:inline">
+                Chất lượng cao
+              </span>
+              <div className="w-7 h-7 rounded-full bg-rose-100 flex items-center justify-center text-rose-600">
+                <Check className="w-4 h-4 stroke-[3]" />
+              </div>
+            </div>
           </div>
+          <p className="text-[11px] text-slate-500 mt-2 italic">
+            * Toàn bộ bài học SGK, từ vựng, hội thoại và đề thi sẽ sử dụng trực tiếp chất giọng Google US English này.
+          </p>
         </div>
 
         {/* Voice Parameters Tuning: Resonance/Pitch & Speed */}
@@ -206,7 +177,7 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
             <div>
               <div className="flex items-center justify-between text-xs font-semibold text-slate-700 mb-1.5">
                 <span>Độ vang sáng (Cao độ pitch):</span>
-                <span className="font-mono text-pink-700 font-bold">{pitch.toFixed(2)}x</span>
+                <span className="font-mono text-rose-700 font-bold">{pitch.toFixed(2)}x</span>
               </div>
               <input
                 type="range"
@@ -215,11 +186,11 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
                 step="0.02"
                 value={pitch}
                 onChange={e => handlePitchChange(parseFloat(e.target.value))}
-                className="w-full accent-pink-600 cursor-pointer"
+                className="w-full accent-rose-600 cursor-pointer"
               />
               <div className="flex justify-between text-[10px] text-slate-400 mt-1">
                 <span>Trầm ấm (0.9x)</span>
-                <span>Vang sáng (1.18x)</span>
+                <span>Vang sáng (1.15x)</span>
                 <span>Trong vút (1.35x)</span>
               </div>
             </div>
@@ -241,36 +212,31 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
               />
               <div className="flex justify-between text-[10px] text-slate-400 mt-1">
                 <span>Rất chậm (0.65x)</span>
-                <span>Dễ học (0.85x)</span>
+                <span>Dễ học (0.88x)</span>
                 <span>Bản ngữ (1.0x)</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* System Voices Dropdown (If device has multiple female voices installed) */}
-        {systemVoices.length > 0 && (
-          <div>
-            <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
-              3. Bộ giọng tiếng Anh trên thiết bị của bạn ({systemVoices.length} giọng sẵn có):
-            </label>
-            <select
-              value={selectedURI}
-              onChange={e => handleSelectSystemVoice(e.target.value)}
-              className="w-full p-3 rounded-xl border border-slate-300 text-xs sm:text-sm font-medium bg-white text-slate-800 shadow-sm focus:ring-2 focus:ring-pink-300 focus:outline-none"
-            >
-              <option value="">-- Mặc định giọng Nữ tối ưu (Leda / Google / Apple) --</option>
-              {systemVoices.map((v, i) => (
-                <option key={v.voiceURI || i} value={v.voiceURI || v.name}>
-                  {v.name} ({v.lang}) {v.localService ? '· [Sẵn trong máy]' : '· [Chất lượng cao]'}
-                </option>
-              ))}
-            </select>
+        {/* Section 3: Verified device voice */}
+        <div>
+          <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">
+            3. Trạng thái kết nối giọng đọc trên thiết bị:
+          </label>
+          <div className="w-full p-3.5 rounded-xl border border-rose-300 text-xs sm:text-sm font-semibold bg-rose-50/50 text-rose-950 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              <span>Google US English (en-US) · [Chất lượng cao]</span>
+            </div>
+            <span className="text-xs text-rose-700 font-bold bg-white px-2.5 py-1 rounded-md border border-rose-200">
+              Đang hoạt động 100%
+            </span>
           </div>
-        )}
+        </div>
 
         {/* Live Audio Test Area */}
-        <div className="bg-gradient-to-r from-pink-500 via-rose-500 to-amber-500 text-white rounded-2xl p-5 space-y-3 shadow-md">
+        <div className="bg-gradient-to-r from-rose-500 via-pink-500 to-amber-500 text-white rounded-2xl p-5 space-y-3 shadow-md">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold uppercase tracking-wider text-pink-100 flex items-center gap-1.5">
               <Zap className="w-4 h-4" /> Nghe thử chất giọng ngay lập tức:
@@ -278,7 +244,7 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
             <button
               onClick={() => playPreview()}
               disabled={isSpeakingTest}
-              className="px-4 py-2 bg-white text-pink-700 hover:bg-pink-50 text-xs font-extrabold rounded-xl shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
+              className="px-4 py-2 bg-white text-rose-700 hover:bg-rose-50 text-xs font-extrabold rounded-xl shadow-sm transition-transform active:scale-95 disabled:opacity-50 flex items-center gap-1.5"
             >
               <Volume2 className={`w-4 h-4 ${isSpeakingTest ? 'animate-bounce' : ''}`} />
               <span>{isSpeakingTest ? 'Đang phát...' : 'Phát giọng thử nghiệm'}</span>
@@ -292,22 +258,22 @@ export const VoiceStudioModal: React.FC<VoiceStudioModalProps> = ({
           {/* Quick preset test buttons */}
           <div className="flex flex-wrap gap-2 pt-1">
             <button
-              onClick={() => playPreview("Where are you from? I'm from Viet Nam.")}
+              onClick={() => playPreview("Where are you from? I'm from Britain.")}
               className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-[11px] font-bold rounded-lg transition-colors"
             >
-              "Where are you from?"
+              "Where are you from? I'm from Britain."
             </button>
             <button
               onClick={() => playPreview("Hello Lucy, I am Ben. I'm from Australia.")}
               className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-[11px] font-bold rounded-lg transition-colors"
             >
-              "I'm from Australia"
+              "Hello Lucy, I am Ben."
             </button>
             <button
               onClick={() => playPreview("The light is red. It says stop!")}
               className="px-2.5 py-1 bg-white/20 hover:bg-white/30 text-[11px] font-bold rounded-lg transition-colors"
             >
-              "The light is red"
+              "The light is red. It says stop!"
             </button>
           </div>
         </div>
